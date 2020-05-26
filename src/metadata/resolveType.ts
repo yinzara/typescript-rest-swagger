@@ -304,13 +304,13 @@ function getReferenceType(type: ts.EntityNameOrEntityNameExpression, genericType
                     description: referenceType.description,
                     typeAlias: {
                         typeName: typeAlias.typeName,
-                        types: [
+                        types: Object.keys(properties).length > 0 ? [
                             ...typeAlias.types,
                             {
                                 typeName: referenceType.typeName,
                                 properties: properties
                             } as Type
-                        ]
+                        ] : typeAlias.types
                     }
                 };
             }

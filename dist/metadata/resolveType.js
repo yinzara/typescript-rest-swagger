@@ -297,12 +297,12 @@ function getReferenceType(type, genericTypeMap, genericTypes) {
                     description: referenceType.description,
                     typeAlias: {
                         typeName: typeAlias.typeName,
-                        types: __spreadArrays(typeAlias.types, [
+                        types: Object.keys(properties).length > 0 ? __spreadArrays(typeAlias.types, [
                             {
                                 typeName: referenceType.typeName,
                                 properties: properties
                             }
-                        ])
+                        ]) : typeAlias.types
                     }
                 };
             }
