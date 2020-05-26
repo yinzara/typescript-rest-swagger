@@ -192,6 +192,7 @@ export interface Security {
 export interface Type {
     typeName: string;
     typeArgument?: Type;
+    types?: Array<Type>;
 }
 
 export interface EnumerateType extends Type {

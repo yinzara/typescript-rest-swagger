@@ -137,10 +137,10 @@ function getCompilerOptions(loadTsconfig: boolean, tsconfigPath?: string | null)
     }
 }
 
-function getAbsolutePath(path: string, basePath: string): string {
-    if (isAbsolute(path)) {
-        return path;
+function getAbsolutePath(pth: string, basePath: string): string {
+    if (isAbsolute(pth)) {
+        return pth;
     } else {
-        return join(basePath, path);
+        return join(basePath, pth);
     }
 }

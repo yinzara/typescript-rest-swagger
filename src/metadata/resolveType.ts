@@ -278,7 +278,7 @@ function getReferenceType(type: ts.EntityNameOrEntityNameExpression, genericType
         const properties = getModelTypeProperties(modelTypeDeclaration, genericTypes);
         const additionalProperties = getModelTypeAdditionalProperties(modelTypeDeclaration);
 
-        const referenceType: ReferenceType = {
+        let referenceType: ReferenceType = {
             description: getModelDescription(modelTypeDeclaration),
             properties: properties,
             typeName: typeNameWithGenerics,
@@ -295,8 +295,26 @@ function getReferenceType(type: ts.EntityNameOrEntityNameExpression, genericType
             referenceType.additionalProperties = additionalProperties;
         }
 
-        const extendedProperties = getInheritedProperties(modelTypeDeclaration, genericTypes);
-        mergeReferenceTypeProperties(referenceType.properties, extendedProperties);
+        if (modelTypeDeclaration.kind !== ts.SyntaxKind.TypeAliasDeclaration) {
+            const typeAlias = getInheritanceAlias(modelTypeDeclaration, genericTypes);
+            if (typeAlias) {
+                referenceType = {
+                    typeName: referenceType.typeName,
+                    properties: [],
+                    description: referenceType.description,
+                    typeAlias: {
+                        typeName: typeAlias.typeName,
+                        types: [
+                            ...typeAlias.types,
+                            {
+                                typeName: referenceType.typeName,
+                                properties: properties
+                            } as Type
+                        ]
+                    }
+                };
+            }
+        }
 
         localReferenceTypeCache[typeNameWithGenerics] = referenceType;
 
@@ -305,17 +323,6 @@ function getReferenceType(type: ts.EntityNameOrEntityNameExpression, genericType
         console.error(`There was a problem resolving type of '${getTypeName(typeName, genericTypes)}'.`);
         throw err;
     }
-}
-
-function mergeReferenceTypeProperties(properties: Array<Property>, extendedProperties: Array<Property>) {
-    extendedProperties.forEach(prop => {
-        const existingProp = properties.find(p => p.name === prop.name);
-        if (existingProp) {
-            existingProp.description = existingProp.description || prop.description;
-        } else {
-            properties.push(prop);
-        }
-    });
 }
 
 function resolveFqTypeName(type: ts.EntityNameOrEntityNameExpression): string {
@@ -647,14 +654,14 @@ function hasPublicConstructorModifier(node: ts.Node) {
     });
 }
 
-function getInheritedProperties(modelTypeDeclaration: UsableDeclaration, genericTypes?: Array<ts.TypeNode>): Array<Property> {
-    const properties = new Array<Property>();
+function getInheritanceAlias(modelTypeDeclaration: UsableDeclaration, genericTypes?: Array<ts.TypeNode>): Type | undefined {
     if (modelTypeDeclaration.kind === ts.SyntaxKind.TypeAliasDeclaration) {
-        return [];
+        return undefined;
     }
     const heritageClauses = modelTypeDeclaration.heritageClauses;
-    if (!heritageClauses) { return properties; }
+    if (!heritageClauses) { return undefined; }
 
+    const types: Array<ReferenceType> = [];
     heritageClauses.forEach(clause => {
         if (!clause.types) { return; }
 
@@ -679,14 +686,16 @@ function getInheritedProperties(modelTypeDeclaration: UsableDeclaration, generic
             const parentGenerictypes = resolveTypeArguments(modelTypeDeclaration as ts.ClassDeclaration, genericTypes);
             const genericTypeMap = resolveTypeArguments(type, t.typeArguments, parentGenerictypes);
             const subClassGenericTypes: any = getSubClassGenericTypes(genericTypeMap, t.typeArguments);
-            const referenceType = getReferenceType(baseEntityName, genericTypeMap, subClassGenericTypes)
-            MetadataGenerator.current.addReferenceType(referenceType)
-            referenceType.properties
-                .forEach(property => properties.push(property));
+            const referenceType = getReferenceType(baseEntityName, genericTypeMap, subClassGenericTypes);
+            MetadataGenerator.current.addReferenceType(referenceType);
+            types.push(referenceType);
         });
     });
 
-    return properties;
+    return {
+        typeName: 'allOf',
+        types: types
+    };
 }
 
 function getModelDescription(modelTypeDeclaration: UsableDeclaration) {

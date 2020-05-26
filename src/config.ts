@@ -107,4 +107,20 @@ export interface SwaggerConfig {
      * Directory to ignore during TypeScript metadata scan
      */
     ignore?: [string];
+
+    /**
+     * Properties to ignore on all entities when generating
+     */
+    ignoreProperties?: [string];
+
+    /**
+     * Types to ignore when generating
+     */
+    ignoreTypes?: [string];
+
+    /**
+     * If specified, only include a definition for a type if it matches the glob patterns.  WARNING this can cause
+     * an incomplete Swagger Specification and should be used only to limit the size of the output definition
+     */
+    includeTypes?: [string];
 }

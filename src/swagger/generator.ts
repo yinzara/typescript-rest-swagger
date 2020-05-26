@@ -4,6 +4,7 @@ import * as _ from 'lodash';
 import * as mkdirp from 'mkdirp';
 import * as pathUtil from 'path';
 import * as YAML from 'yamljs';
+import * as mm from "minimatch";
 import { Specification, SwaggerConfig } from '../config';
 import {
     ArrayType, EnumerateType, Metadata, Method, ObjectType, Parameter,
@@ -100,7 +101,13 @@ export class SpecGenerator {
 
     private buildDefinitions() {
         const definitions: { [definitionsName: string]: Swagger.Schema } = {};
-        Object.keys(this.metadata.referenceTypes).map(typeName => {
+        const ignoreTypes = this.config.ignoreTypes || [];
+        const includeTypes = this.config.includeTypes;
+
+        Object.keys(this.metadata.referenceTypes)
+            .filter(typeName => includeTypes === undefined || includeTypes.some(type => mm(typeName, type)))
+            .filter(typeName => !ignoreTypes.some(type => mm(typeName, type)))
+            .map(typeName => {
             this.debugger('Generating definition for type: %s', typeName);
             const referenceType = this.metadata.referenceTypes[typeName];
             this.debugger('Metadata for referenced Type: %j', referenceType);
@@ -269,8 +276,11 @@ export class SpecGenerator {
 
     private buildProperties(properties: Array<Property>) {
         const swaggerProperties: { [propertyName: string]: Swagger.Schema } = {};
+        const ignoreProperties = this.config.ignoreProperties || [];
 
-        properties.forEach(property => {
+        properties
+            .filter(property => !ignoreProperties.some(prop => mm(property.name, prop)))
+            .forEach(property => {
             const swaggerType = this.getSwaggerType(property.type);
             if (!swaggerType.$ref) {
                 swaggerType.description = property.description;
@@ -283,8 +293,11 @@ export class SpecGenerator {
 
     private buildAdditionalProperties(properties: Array<Property>) {
         const swaggerAdditionalProperties: { [ref: string]: string } = {};
+        const ignoreProperties = this.config.ignoreProperties || [];
 
-        properties.forEach(property => {
+        properties
+            .filter(property => !ignoreProperties.some(prop => mm(property.name, prop)))
+            .forEach(property => {
             const swaggerType = this.getSwaggerType(property.type);
             if (swaggerType.$ref) {
                 swaggerAdditionalProperties['$ref'] = swaggerType.$ref;
