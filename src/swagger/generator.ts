@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as _ from 'lodash';
 import * as mkdirp from 'mkdirp';
 import * as pathUtil from 'path';
-import * as YAML from 'yamljs';
+import * as YAML from 'js-yaml';
 import * as mm from "minimatch";
 import { Specification, SwaggerConfig } from '../config';
 import {
@@ -38,7 +38,7 @@ export class SpecGenerator {
                             reject(err);
                         }
                         if (this.config.yaml) {
-                            fs.writeFile(`${swaggerDir}/swagger.yaml`, YAML.stringify(spec, 1000), (errYaml: any) => {
+                            fs.writeFile(`${swaggerDir}/swagger.yaml`, YAML.dump(spec, {flowLevel: -1}), (errYaml: any) => {
                                 if (errYaml) {
                                     reject(errYaml);
                                 }

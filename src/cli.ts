@@ -7,7 +7,7 @@ import * as fs from 'fs-extra-promise';
 import * as _ from 'lodash';
 import { isAbsolute, join } from 'path';
 import * as ts from 'typescript';
-import * as YAML from 'yamljs';
+import * as YAML from 'js-yaml';
 import * as path from 'path';
 import { Config, Specification, SwaggerConfig } from './config';
 import { MetadataGenerator } from './metadata/metadataGenerator';
