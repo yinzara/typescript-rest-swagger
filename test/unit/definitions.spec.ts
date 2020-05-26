@@ -210,7 +210,6 @@ describe('Definition generation', () => {
       expression = jsonata('definitions.UUID');
       expect(expression.evaluate(spec)).toEqual({
         description: '',
-        properties: {},
         type: 'string',
       });
     });
@@ -363,12 +362,11 @@ describe('Definition generation', () => {
   describe('AbstractEntityEndpoint', () => {
     it('should not duplicate inherited properties in the required list', () => {
       const expression = jsonata('definitions.NamedEntity.required');
-      expect(expression.evaluate(spec)).toStrictEqual(['id', 'name']);
+      expect(expression.evaluate(spec)).toBeUndefined();
     });
-
-    it('should use property description from base class if not defined in child', () => {
-      const expression = jsonata('definitions.NamedEntity.properties.id.description');
-      expect(expression.evaluate(spec)).toEqual('A numeric identifier');
+    it('should "allOf" base class', () => {
+      const expression = jsonata('definitions.NamedEntity.allOf[0]');
+      expect(expression.evaluate(spec)).toEqual({$ref: "#/definitions/Entity"});
     });
   });
 
