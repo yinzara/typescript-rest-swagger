@@ -53,7 +53,7 @@ var fs = require("fs");
 var _ = require("lodash");
 var mkdirp = require("mkdirp");
 var pathUtil = require("path");
-var YAML = require("yamljs");
+var YAML = require("js-yaml");
 var mm = require("minimatch");
 var config_1 = require("../config");
 var SpecGenerator = /** @class */ (function () {
@@ -91,7 +91,7 @@ var SpecGenerator = /** @class */ (function () {
                                             reject(err);
                                         }
                                         if (_this.config.yaml) {
-                                            fs.writeFile(swaggerDir + "/swagger.yaml", YAML.stringify(spec, 1000), function (errYaml) {
+                                            fs.writeFile(swaggerDir + "/swagger.yaml", YAML.dump(spec, { flowLevel: -1 }), function (errYaml) {
                                                 if (errYaml) {
                                                     reject(errYaml);
                                                 }
