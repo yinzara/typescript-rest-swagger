@@ -211,7 +211,7 @@ describe('Definition generation', () => {
       expect(expression.evaluate(spec)).toEqual({
         description: '',
         properties: {},
-        type: 'object',
+        type: 'string',
       });
     });
 

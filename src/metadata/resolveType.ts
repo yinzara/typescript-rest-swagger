@@ -44,6 +44,10 @@ export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String,
         return getUnionType(typeNode);
     }
 
+    if (typeNode.kind === ts.SyntaxKind.ParenthesizedType && (typeNode as any).type.kind === ts.SyntaxKind.UnionType) {
+        return getParenthizedType((typeNode as any).type, genericTypeMap);
+    }
+
     if (typeNode.kind !== ts.SyntaxKind.TypeReference) {
         throw new Error(`Unknown type: ${ts.SyntaxKind[typeNode.kind]}`);
     }
@@ -54,6 +58,8 @@ export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String,
     if (typeName === 'Buffer') { return { typeName: 'buffer' }; }
     if (typeName === 'DownloadBinaryData') { return { typeName: 'buffer' }; }
     if (typeName === 'DownloadResource') { return { typeName: 'buffer' }; }
+    if (typeName === 'string') { return { typeName: 'string' }; }
+    if (typeName === 'number') { return { typeName: 'number' }; }
 
     if (typeName === 'Promise') {
         typeReference = typeReference.typeArguments[0];
@@ -208,6 +214,15 @@ function getUnionType(typeNode: ts.TypeNode) {
     } as EnumerateType;
 }
 
+function getParenthizedType(typeNode: ts.TypeNode, genericTypeMap: Map<String, ts.TypeNode> | undefined) {
+    const union = typeNode as ts.UnionTypeNode;
+    return {
+        typeName: 'oneOf',
+        types: union.types
+            .map(t => resolveType(t, genericTypeMap)),
+    };
+}
+
 function removeQuotes(str: string) {
     return str.replace(/^["']|["']$/g, '');
 }
@@ -239,7 +254,7 @@ function getInlineObjectType(typeNode: ts.TypeNode): ObjectType {
     return type;
 }
 
-function getReferenceType(type: ts.EntityName, genericTypeMap?: Map<String, ts.TypeNode>, genericTypes?: Array<ts.TypeNode>): ReferenceType {
+function getReferenceType(type: ts.EntityNameOrEntityNameExpression, genericTypeMap?: Map<String, ts.TypeNode>, genericTypes?: Array<ts.TypeNode>): ReferenceType {
     let typeName = resolveFqTypeName(type);
     if (genericTypeMap && genericTypeMap.has(typeName)) {
         const refType: any = genericTypeMap.get(typeName);
@@ -268,6 +283,14 @@ function getReferenceType(type: ts.EntityName, genericTypeMap?: Map<String, ts.T
             properties: properties,
             typeName: typeNameWithGenerics,
         };
+
+        if (modelTypeDeclaration.kind === ts.SyntaxKind.TypeAliasDeclaration) {
+            const aliasedType = (modelTypeDeclaration as ts.TypeAliasDeclaration).type;
+            const resolvedType = resolveType(aliasedType);
+            if (resolvedType) {
+                referenceType.typeAlias = resolvedType;
+            }
+        }
         if (additionalProperties && additionalProperties.length) {
             referenceType.additionalProperties = additionalProperties;
         }
@@ -295,13 +318,36 @@ function mergeReferenceTypeProperties(properties: Array<Property>, extendedPrope
     });
 }
 
-function resolveFqTypeName(type: ts.EntityName): string {
+function resolveFqTypeName(type: ts.EntityNameOrEntityNameExpression): string {
     if (type.kind === ts.SyntaxKind.Identifier) {
-        return (type as ts.Identifier).text;
+        const prefixes = [];
+        let parent: ts.Node = type;
+        do {
+            parent = findParentOfKind(parent, ts.SyntaxKind.ModuleDeclaration);
+            if (parent) {
+                prefixes.unshift((parent as ts.ModuleDeclaration).name.text);
+            }
+        } while (parent);
+        if (prefixes.length > 0) {
+            return `${prefixes.join('.')}.${(type as ts.Identifier).text}`;
+        } else {
+            return (type as ts.Identifier).text;
+        }
+    } else if (type.kind === ts.SyntaxKind.PropertyAccessExpression) {
+        return `${(type as ts.PropertyAccessExpression).expression.getText()}.${(type as ts.PropertyAccessExpression).name.text}`;
     }
-
     const qualifiedType = type as ts.QualifiedName;
     return resolveFqTypeName(qualifiedType.left) + '.' + (qualifiedType.right as ts.Identifier).text;
+}
+
+function findParentOfKind(type: ts.Node, kind: ts.SyntaxKind): any {
+    if (type.parent === undefined) {
+        return undefined;
+    } else if (type.parent.kind === kind) {
+        return type.parent;
+    } else {
+        return findParentOfKind(type.parent, kind);
+    }
 }
 
 function resolveSimpleTypeName(type: ts.EntityName): string {
@@ -355,6 +401,7 @@ function getAnyTypeName(typeNode: ts.TypeNode): string {
 function createCircularDependencyResolver(typeName: string) {
     const referenceType = {
         description: '',
+        circular: true,
         properties: new Array<Property>(),
         typeName: typeName,
     };
@@ -380,14 +427,18 @@ function nodeIsUsable(node: ts.Node) {
     }
 }
 
-function resolveLeftmostIdentifier(type: ts.EntityName): ts.Identifier {
-    while (type.kind !== ts.SyntaxKind.Identifier) {
-        type = (type as ts.QualifiedName).left;
+function resolveLeftmostIdentifier(type: ts.EntityNameOrEntityNameExpression): ts.Identifier {
+    while (type.kind !== ts.SyntaxKind.Identifier ) {
+        if (type.kind === ts.SyntaxKind.PropertyAccessExpression) {
+            type = (type as ts.PropertyAccessExpression).expression as ts.EntityNameOrEntityNameExpression;
+        } else {
+            type = (type as ts.QualifiedName).left;
+        }
     }
     return type as ts.Identifier;
 }
 
-function resolveModelTypeScope(leftmost: ts.EntityName, statements: Array<any>): Array<any> {
+function resolveModelTypeScope(leftmost: ts.EntityNameOrEntityNameExpression, statements: ReadonlyArray<any>): ReadonlyArray<any> {
     // while (leftmost.parent && leftmost.parent.kind === ts.SyntaxKind.QualifiedName) {
     //     const leftmostName = leftmost.kind === ts.SyntaxKind.Identifier
     //         ? (leftmost as ts.Identifier).text
@@ -410,16 +461,28 @@ function resolveModelTypeScope(leftmost: ts.EntityName, statements: Array<any>):
     //     statements = moduleBlock.statements;
     //     leftmost = leftmost.parent as ts.EntityName;
     // }
+    const moduleParent: ts.ModuleDeclaration = findParentOfKind(leftmost, ts.SyntaxKind.ModuleDeclaration);
+    if (moduleParent && 'statements' in moduleParent.body) {
+        return moduleParent.body.statements;
+    }
+    if (leftmost.parent && leftmost.parent.kind === ts.SyntaxKind.PropertyAccessExpression) {
+        statements = statements
+            .map(n => n as ts.ModuleDeclaration)
+            .filter(n => n.kind === ts.SyntaxKind.ModuleDeclaration && n.name.text === ((leftmost as ts.Identifier).text || (leftmost as ts.Identifier).escapedText) && 'statements' in n.body)
+            .map(n => 'statements' in n.body && n.body.statements)
+            .reduce((prev,next)=>prev||next);
+    }
 
     return statements;
 }
 
-function getModelTypeDeclaration(type: ts.EntityName) {
+function getModelTypeDeclaration(type: ts.EntityNameOrEntityNameExpression) {
     const leftmostIdentifier = resolveLeftmostIdentifier(type);
-    const statements: Array<any> = resolveModelTypeScope(leftmostIdentifier, MetadataGenerator.current.nodes);
+    const statements: ReadonlyArray<any> = resolveModelTypeScope(leftmostIdentifier, MetadataGenerator.current.nodes);
 
-    const typeName = type.kind === ts.SyntaxKind.Identifier
-        ? (type as ts.Identifier).text
+    const typeName =
+        type.kind === ts.SyntaxKind.Identifier ? (type as ts.Identifier).text :
+        type.kind === ts.SyntaxKind.PropertyAccessExpression ? (type as ts.PropertyAccessExpression).name.text
         : (type as ts.QualifiedName).right.text;
     const modelTypes = statements
         .filter(node => {
@@ -493,6 +556,10 @@ function getModelTypeProperties(node: any, genericTypes?: Array<ts.TypeNode>): A
                     type: resolveType(aType)
                 };
             });
+    }
+
+    if (node.kind === ts.SyntaxKind.ParenthesizedType) {
+        return [];
     }
 
     if (node.kind === ts.SyntaxKind.TypeAliasDeclaration) {
@@ -592,15 +659,29 @@ function getInheritedProperties(modelTypeDeclaration: UsableDeclaration, generic
         if (!clause.types) { return; }
 
         clause.types.forEach((t: any) => {
-            let type: any = MetadataGenerator.current.getClassDeclaration(t.expression.getText());
+            let typeName = t.expression.getText();
+            const prefixes = [];
+            let parent: ts.Node = t;
+            do {
+                parent = findParentOfKind(parent, ts.SyntaxKind.ModuleDeclaration);
+                if (parent) {
+                    prefixes.unshift((parent as ts.ModuleDeclaration).name.text);
+                }
+            } while (parent);
+            if (prefixes.length > 0) {
+                typeName = `${prefixes.join('.')}.${typeName}`;
+            }
+            let type: any = MetadataGenerator.current.getClassDeclaration(typeName);
             if (!type) {
-                type = MetadataGenerator.current.getInterfaceDeclaration(t.expression.getText());
+                type = MetadataGenerator.current.getInterfaceDeclaration(typeName);
             }
             const baseEntityName = t.expression as ts.EntityName;
             const parentGenerictypes = resolveTypeArguments(modelTypeDeclaration as ts.ClassDeclaration, genericTypes);
             const genericTypeMap = resolveTypeArguments(type, t.typeArguments, parentGenerictypes);
             const subClassGenericTypes: any = getSubClassGenericTypes(genericTypeMap, t.typeArguments);
-            getReferenceType(baseEntityName, genericTypeMap, subClassGenericTypes).properties
+            const referenceType = getReferenceType(baseEntityName, genericTypeMap, subClassGenericTypes)
+            MetadataGenerator.current.addReferenceType(referenceType)
+            referenceType.properties
                 .forEach(property => properties.push(property));
         });
     });

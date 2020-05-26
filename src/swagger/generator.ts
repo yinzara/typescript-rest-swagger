@@ -104,11 +104,29 @@ export class SpecGenerator {
             this.debugger('Generating definition for type: %s', typeName);
             const referenceType = this.metadata.referenceTypes[typeName];
             this.debugger('Metadata for referenced Type: %j', referenceType);
-            definitions[referenceType.typeName] = {
-                description: referenceType.description,
-                properties: this.buildProperties(referenceType.properties),
-                type: 'object'
-            };
+            if (referenceType.typeAlias) {
+                if ([ 'oneOf', 'anyOf', 'allOf'].includes(referenceType.typeAlias.typeName)) {
+                    const types = (referenceType.typeAlias as any).types.map(this.getSwaggerType.bind(this));
+                    definitions[referenceType.typeName] = {
+                        description: referenceType.description,
+                        ...(referenceType.typeAlias.typeName === 'allOf' ? {allOf: types} : {}),
+                        ...(referenceType.typeAlias.typeName === 'anyOf' ? {anyOf: types} : {}),
+                        ...(referenceType.typeAlias.typeName === 'oneOf' ? {oneOf: types} : {})
+                    };
+                } else {
+                    definitions[referenceType.typeName] = {
+                        description: referenceType.description,
+                        ...this.getSwaggerType(referenceType.typeAlias)
+                    };
+                }
+            } else {
+                definitions[referenceType.typeName] = {
+                    description: referenceType.description,
+                    properties: this.buildProperties(referenceType.properties),
+                    type: 'object'
+                };
+            }
+
             const requiredFields = referenceType.properties.filter(p => p.required).map(p => p.name);
             if (requiredFields && requiredFields.length) {
                 definitions[referenceType.typeName].required = requiredFields;

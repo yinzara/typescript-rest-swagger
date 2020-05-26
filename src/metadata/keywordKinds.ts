@@ -7,11 +7,11 @@ export const keywords = [
     SyntaxKind.BigIntKeyword,
     SyntaxKind.ObjectKeyword,
     SyntaxKind.BooleanKeyword,
-    SyntaxKind.StringKeyword, 
+    SyntaxKind.StringKeyword,
     SyntaxKind.SymbolKeyword,
     SyntaxKind.ThisKeyword,
     SyntaxKind.VoidKeyword,
-    SyntaxKind.UndefinedKeyword, 
+    SyntaxKind.UndefinedKeyword,
     SyntaxKind.NullKeyword,
-    SyntaxKind.NeverKeyword
+    SyntaxKind.NeverKeyword,
 ];

@@ -69,7 +69,7 @@ new SpecGenerator(metadata, swaggerConfig).generate()
         console.info('Generation completed.');
     })
     .catch((err: any) => {
-        console.error(`Error generating swagger. ${err}`);
+        console.error('Error generating swagger', err);
     });
 
 function getPackageJsonValue(key: string): string {
@@ -86,7 +86,7 @@ function getConfig(configPath = 'swagger.json'): Config {
     if (_.endsWith(configFile, '.yml') || _.endsWith(configFile, '.yaml')) {
         return YAML.load(configFile);
     } else if (_.endsWith(configFile, '.js')) {
-        return require(path.join(configFile))
+        return require(path.join(configFile));
     }
     else {
         return fs.readJSONSync(configFile);

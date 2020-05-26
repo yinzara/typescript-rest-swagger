@@ -57,7 +57,9 @@ export class MetadataGenerator {
     }
 
     public addReferenceType(referenceType: ReferenceType) {
-        this.referenceTypes[referenceType.typeName] = referenceType;
+        if (!('circular' in referenceType)) { // don't add circular references
+            this.referenceTypes[referenceType.typeName] = referenceType;
+        }
     }
 
     public getReferenceType(typeName: string) {
@@ -68,24 +70,42 @@ export class MetadataGenerator {
         this.circularDependencyResolvers.push(callback);
     }
 
-    public getClassDeclaration(className: string) {
-        const found = this.nodes
-            .filter(node => {
-                const classDeclaration = (node as ts.ClassDeclaration);
-                return (node.kind === ts.SyntaxKind.ClassDeclaration && classDeclaration.name && classDeclaration.name.text === className);
-            });
+    public getClassDeclaration(className: string, nodes: ReadonlyArray<ts.Node>  = this.nodes): ts.ClassDeclaration | undefined {
+        const moduleIndex = className.indexOf('.');
+        let found: Array<ts.ClassDeclaration>;
+        if (moduleIndex > 0) {
+            const moduleName = className.substring(0, moduleIndex);
+            found = nodes
+                .map(node => node as ts.ModuleDeclaration)
+                .filter(node =>  node.kind === ts.SyntaxKind.ModuleDeclaration && node.name && node.name.text === moduleName)
+                .map(node => 'statements' in node.body && this.getClassDeclaration(className.substring(moduleIndex + 1), node.body.statements))
+                .filter(node => node);
+        } else {
+            found = nodes
+                .map(node => node as ts.ClassDeclaration)
+                .filter(node => node.kind === ts.SyntaxKind.ClassDeclaration && node.name && node.name.text === className);
+        }
         if (found && found.length) {
             return found[0];
         }
         return undefined;
     }
 
-    public getInterfaceDeclaration(className: string) {
-        const found = this.nodes
-            .filter(node => {
-                const interfaceDeclaration = (node as ts.InterfaceDeclaration);
-                return (node.kind === ts.SyntaxKind.InterfaceDeclaration && interfaceDeclaration.name && interfaceDeclaration.name.text === className);
-            });
+    public getInterfaceDeclaration(className: string, nodes: ReadonlyArray<ts.Node> = this.nodes): ts.InterfaceDeclaration | undefined {
+        const moduleIndex = className.indexOf('.');
+        let found: Array<ts.InterfaceDeclaration>;
+        if (moduleIndex > 0) {
+            const moduleName = className.substring(0, moduleIndex);
+            found = nodes
+                .map(node => node as ts.ModuleDeclaration)
+                .filter(node =>  node.kind === ts.SyntaxKind.ModuleDeclaration && node.name && node.name.text === moduleName)
+                .map(node => 'statements' in node.body && this.getInterfaceDeclaration(className.substring(moduleIndex + 1), node.body.statements))
+                .filter(node => node);
+        } else {
+            found = nodes
+                .map(node => node as ts.InterfaceDeclaration)
+                .filter(node => node.kind === ts.SyntaxKind.InterfaceDeclaration && node.name && node.name.text === className);
+        }
         if (found && found.length) {
             return found[0];
         }
@@ -182,6 +202,8 @@ export interface ReferenceType extends Type {
     description: string;
     properties: Array<Property>;
     additionalProperties?: Array<Property>;
+    typeAlias?: Type;
+    types?: Array<Type>;
 }
 
 export interface ObjectType extends Type {
