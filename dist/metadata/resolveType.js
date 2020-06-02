@@ -242,7 +242,10 @@ function getLiteralType(typeNode) {
     }
     var unionTypes = literalTypes[0].type.types;
     return {
-        enumMembers: unionTypes.map(function (unionNode) { return unionNode.literal.text; }),
+        enumMembers: unionTypes.map(function (unionNode) {
+            return unionNode.literal && unionNode.literal.text ||
+                unionNode.typeName && unionNode.typeName.escapedText;
+        }),
         typeName: 'enum',
     };
 }

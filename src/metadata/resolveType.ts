@@ -241,7 +241,9 @@ function getLiteralType(typeNode: ts.TypeNode): EnumerateType | undefined {
 
     const unionTypes = (literalTypes[0] as any).type.types;
     return {
-        enumMembers: unionTypes.map((unionNode: any) => unionNode.literal.text as string),
+        enumMembers: unionTypes.map((unionNode: any) =>
+            unionNode.literal && unionNode.literal.text ||
+            unionNode.typeName && unionNode.typeName.escapedText as string),
         typeName: 'enum',
     } as EnumerateType;
 }
