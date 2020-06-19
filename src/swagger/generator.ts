@@ -379,6 +379,10 @@ export class SpecGenerator {
             return this.getSwaggerTypeForReferenceType(type as ReferenceType);
         }
 
+        if (refType.typeName === 'oneOf' && refType.types) {
+            return this.getSwaggerOneOfType(refType);
+        }
+
         const objectType = type as ObjectType;
         return this.getSwaggerTypeForObjectType(objectType);
     }
@@ -403,6 +407,10 @@ export class SpecGenerator {
         };
 
         return typeMap[type.typeName];
+    }
+
+    private getSwaggerOneOfType(oneOfType: Type): Swagger.Schema {
+        return { oneOf: oneOfType.types.map(t => this.getSwaggerType(t))}
     }
 
     private getSwaggerTypeForObjectType(objectType: ObjectType): Swagger.Schema {

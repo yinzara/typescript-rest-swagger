@@ -5,7 +5,6 @@ import {
     getDecoratorArguments
 } from '../utils/decoratorUtils'
 import { getFirstMatchingJSDocTagName } from '../utils/jsDocUtils';
-import { keywords } from './keywordKinds';
 import { ArrayType, EnumerateType, MetadataGenerator, ObjectType, Property, ReferenceType, Type } from './metadataGenerator';
 
 const syntaxKindMap: { [kind: number]: string } = {};
@@ -44,7 +43,7 @@ export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String,
     }
 
     if (typeNode.kind === ts.SyntaxKind.UnionType) {
-        return getUnionType(typeNode);
+        return getUnionType(typeNode, genericTypeMap);
     }
 
     if (typeNode.kind === ts.SyntaxKind.ParenthesizedType && (typeNode as any).type.kind === ts.SyntaxKind.UnionType) {
@@ -199,7 +198,7 @@ function parseEnumValueByKind(value: string, kind: ts.SyntaxKind): any {
     return kind === ts.SyntaxKind.NumericLiteral ? parseFloat(value) : value;
 }
 
-function getUnionType(typeNode: ts.TypeNode) {
+function getUnionType(typeNode: ts.TypeNode, genericTypeMap: Map<String, ts.TypeNode> | undefined) {
     const union = typeNode as ts.UnionTypeNode;
     let baseType: any = null;
     let isObject = false;
@@ -212,7 +211,7 @@ function getUnionType(typeNode: ts.TypeNode) {
         }
     });
     if (isObject) {
-        return { typeName: 'object' };
+        return getParenthizedType(typeNode, genericTypeMap)
     }
     return {
         enumMembers: union.types.map((type, index) => {
@@ -579,28 +578,20 @@ function getModelTypeProperties(node: any, genericTypes?: Array<ts.TypeNode>): A
             });
     }
 
-    if (node.kind === ts.SyntaxKind.ParenthesizedType) {
+    if (node.kind === ts.SyntaxKind.ParenthesizedType || node.kind === ts.SyntaxKind.TypeAliasDeclaration) {
         return [];
-    }
-
-    if (node.kind === ts.SyntaxKind.TypeAliasDeclaration) {
-        const typeAlias = node as ts.TypeAliasDeclaration;
-
-        return !keywords.includes(typeAlias.type.kind)
-            ? getModelTypeProperties(typeAlias.type, genericTypes)
-            : [];
     }
 
     const classDeclaration = node as ts.ClassDeclaration;
 
-    let properties = classDeclaration.members.filter((member: any) => {
+    let properties = (classDeclaration.members && classDeclaration.members.filter((member: any) => {
         if (member.kind !== ts.SyntaxKind.PropertyDeclaration) { return false; }
 
         const propertySignature = member as ts.PropertySignature;
         return propertySignature && hasPublicMemberModifier(propertySignature);
-    }) as Array<ts.PropertyDeclaration | ts.ParameterDeclaration>;
+    }) || []) as Array<ts.PropertyDeclaration | ts.ParameterDeclaration>;
 
-    const classConstructor = classDeclaration.members.find((member: any) => member.kind === ts.SyntaxKind.Constructor) as ts.ConstructorDeclaration;
+    const classConstructor = classDeclaration.members && classDeclaration.members.find((member: any) => member.kind === ts.SyntaxKind.Constructor) as ts.ConstructorDeclaration;
     if (classConstructor && classConstructor.parameters) {
         properties = properties.concat(classConstructor.parameters.filter(parameter => hasPublicConstructorModifier(parameter)) as any);
     }

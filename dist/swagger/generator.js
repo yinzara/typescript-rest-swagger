@@ -440,6 +440,9 @@ var SpecGenerator = /** @class */ (function () {
         if (refType.properties && refType.description !== undefined) {
             return this.getSwaggerTypeForReferenceType(type);
         }
+        if (refType.typeName === 'oneOf' && refType.types) {
+            return this.getSwaggerOneOfType(refType);
+        }
         var objectType = type;
         return this.getSwaggerTypeForObjectType(objectType);
     };
@@ -462,6 +465,10 @@ var SpecGenerator = /** @class */ (function () {
             void: { type: 'void' },
         };
         return typeMap[type.typeName];
+    };
+    SpecGenerator.prototype.getSwaggerOneOfType = function (oneOfType) {
+        var _this = this;
+        return { oneOf: oneOfType.types.map(function (t) { return _this.getSwaggerType(t); }) };
     };
     SpecGenerator.prototype.getSwaggerTypeForObjectType = function (objectType) {
         return { type: 'object', properties: this.buildProperties(objectType.properties) };

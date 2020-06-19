@@ -116,6 +116,8 @@ export function IsDouble(target: any, propertyKey: string, parameterIndex?: numb
   return;
 }
 
+const EnumSymbol = Symbol.for("typescript-rest-swagger-enum")
+
 /**
  * Decorator to provide enum values for a string field dynamically
  * Can only be used as a decorator and not as a JSDoc comment
@@ -126,5 +128,11 @@ export function IsDouble(target: any, propertyKey: string, parameterIndex?: numb
  * @Enum(...getEnumValues())
  */
 export function Enum(...values: Array<string>): any {
-    return () => { return; };
+    return (target: any) => {
+        Reflect.set(target, EnumSymbol, values)
+    };
+}
+
+export function getEnumValues(target: any): Array<string> | undefined {
+    return Reflect.get(target, EnumSymbol)
 }

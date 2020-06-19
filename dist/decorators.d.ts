@@ -94,3 +94,4 @@ export declare function IsDouble(target: any, propertyKey: string, parameterInde
  * @Enum(...getEnumValues())
  */
 export declare function Enum(...values: Array<string>): any;
+export declare function getEnumValues(target: any): Array<string> | undefined;

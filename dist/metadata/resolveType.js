@@ -12,7 +12,6 @@ var _ = require("lodash");
 var ts = require("typescript");
 var decoratorUtils_1 = require("../utils/decoratorUtils");
 var jsDocUtils_1 = require("../utils/jsDocUtils");
-var keywordKinds_1 = require("./keywordKinds");
 var metadataGenerator_1 = require("./metadataGenerator");
 var syntaxKindMap = {};
 syntaxKindMap[ts.SyntaxKind.NumberKeyword] = 'number';
@@ -43,7 +42,7 @@ function resolveType(typeNode, genericTypeMap) {
         return getInlineObjectType(typeNode);
     }
     if (typeNode.kind === ts.SyntaxKind.UnionType) {
-        return getUnionType(typeNode);
+        return getUnionType(typeNode, genericTypeMap);
     }
     if (typeNode.kind === ts.SyntaxKind.ParenthesizedType && typeNode.type.kind === ts.SyntaxKind.UnionType) {
         return getParenthizedType(typeNode.type, genericTypeMap);
@@ -198,7 +197,7 @@ function getEnumerateType(typeNode) {
 function parseEnumValueByKind(value, kind) {
     return kind === ts.SyntaxKind.NumericLiteral ? parseFloat(value) : value;
 }
-function getUnionType(typeNode) {
+function getUnionType(typeNode, genericTypeMap) {
     var union = typeNode;
     var baseType = null;
     var isObject = false;
@@ -211,7 +210,7 @@ function getUnionType(typeNode) {
         }
     });
     if (isObject) {
-        return { typeName: 'object' };
+        return getParenthizedType(typeNode, genericTypeMap);
     }
     return {
         enumMembers: union.types.map(function (type, index) {
@@ -543,24 +542,18 @@ function getModelTypeProperties(node, genericTypes) {
             };
         });
     }
-    if (node.kind === ts.SyntaxKind.ParenthesizedType) {
+    if (node.kind === ts.SyntaxKind.ParenthesizedType || node.kind === ts.SyntaxKind.TypeAliasDeclaration) {
         return [];
     }
-    if (node.kind === ts.SyntaxKind.TypeAliasDeclaration) {
-        var typeAlias = node;
-        return !keywordKinds_1.keywords.includes(typeAlias.type.kind)
-            ? getModelTypeProperties(typeAlias.type, genericTypes)
-            : [];
-    }
     var classDeclaration = node;
-    var properties = classDeclaration.members.filter(function (member) {
+    var properties = (classDeclaration.members && classDeclaration.members.filter(function (member) {
         if (member.kind !== ts.SyntaxKind.PropertyDeclaration) {
             return false;
         }
         var propertySignature = member;
         return propertySignature && hasPublicMemberModifier(propertySignature);
-    });
-    var classConstructor = classDeclaration.members.find(function (member) { return member.kind === ts.SyntaxKind.Constructor; });
+    }) || []);
+    var classConstructor = classDeclaration.members && classDeclaration.members.find(function (member) { return member.kind === ts.SyntaxKind.Constructor; });
     if (classConstructor && classConstructor.parameters) {
         properties = properties.concat(classConstructor.parameters.filter(function (parameter) { return hasPublicConstructorModifier(parameter); }));
     }

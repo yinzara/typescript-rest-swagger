@@ -25,6 +25,7 @@ export declare class SpecGenerator {
     private getOperationId;
     private getSwaggerType;
     private getSwaggerTypeForPrimitiveType;
+    private getSwaggerOneOfType;
     private getSwaggerTypeForObjectType;
     private getSwaggerTypeForArrayType;
     private getSwaggerTypeForEnumType;

@@ -1,6 +1,6 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Enum = exports.IsDouble = exports.IsFloat = exports.IsLong = exports.IsInt = exports.Hidden = exports.Produces = exports.Consumes = exports.Tags = exports.Example = exports.Response = void 0;
+exports.getEnumValues = exports.Enum = exports.IsDouble = exports.IsFloat = exports.IsLong = exports.IsInt = exports.Hidden = exports.Produces = exports.Consumes = exports.Tags = exports.Example = exports.Response = void 0;
 /**
  * A decorator to document the responses that a given service method can return. It is used to generate
  * documentation for the REST service.
@@ -129,6 +129,7 @@ function IsDouble(target, propertyKey, parameterIndex) {
     return;
 }
 exports.IsDouble = IsDouble;
+var EnumSymbol = Symbol.for("typescript-rest-swagger-enum");
 /**
  * Decorator to provide enum values for a string field dynamically
  * Can only be used as a decorator and not as a JSDoc comment
@@ -143,7 +144,13 @@ function Enum() {
     for (var _i = 0; _i < arguments.length; _i++) {
         values[_i] = arguments[_i];
     }
-    return function () { return; };
+    return function (target) {
+        Reflect.set(target, EnumSymbol, values);
+    };
 }
 exports.Enum = Enum;
+function getEnumValues(target) {
+    return Reflect.get(target, EnumSymbol);
+}
+exports.getEnumValues = getEnumValues;
 //# sourceMappingURL=decorators.js.map
