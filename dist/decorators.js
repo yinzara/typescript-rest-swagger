@@ -1,6 +1,6 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IsDouble = exports.IsFloat = exports.IsLong = exports.IsInt = exports.Hidden = exports.Produces = exports.Consumes = exports.Tags = exports.Example = exports.Response = void 0;
+exports.Enum = exports.IsDouble = exports.IsFloat = exports.IsLong = exports.IsInt = exports.Hidden = exports.Produces = exports.Consumes = exports.Tags = exports.Example = exports.Response = void 0;
 /**
  * A decorator to document the responses that a given service method can return. It is used to generate
  * documentation for the REST service.
@@ -129,4 +129,21 @@ function IsDouble(target, propertyKey, parameterIndex) {
     return;
 }
 exports.IsDouble = IsDouble;
+/**
+ * Decorator to provide enum values for a string field dynamically
+ * Can only be used as a decorator and not as a JSDoc comment
+ *
+ * @Enum('A_VALUE', 'ANOTHER')
+ * OR
+ * const { getEnumValues } = require("./another-module")
+ * @Enum(...getEnumValues())
+ */
+function Enum() {
+    var values = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        values[_i] = arguments[_i];
+    }
+    return function () { return; };
+}
+exports.Enum = Enum;
 //# sourceMappingURL=decorators.js.map

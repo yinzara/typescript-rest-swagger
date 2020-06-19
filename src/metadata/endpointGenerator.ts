@@ -49,7 +49,7 @@ export abstract class EndpointGenerator<T extends ts.Node> {
             return argument.elements.map(value => value.getText())
                 .map(val => (val && val.startsWith('\'') && val.endsWith('\'')) ? val.slice(1, -1) : val);
         } else {
-            return argument;
+            return argument as Array<string>;
         }
     }
 

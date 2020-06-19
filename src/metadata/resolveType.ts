@@ -1,6 +1,9 @@
 import * as _ from 'lodash';
 import * as ts from 'typescript';
-import { getDecoratorName } from '../utils/decoratorUtils';
+import {
+    getDecoratorName,
+    getDecoratorArguments
+} from '../utils/decoratorUtils'
 import { getFirstMatchingJSDocTagName } from '../utils/jsDocUtils';
 import { keywords } from './keywordKinds';
 import { ArrayType, EnumerateType, MetadataGenerator, ObjectType, Property, ReferenceType, Type } from './metadataGenerator';
@@ -136,6 +139,11 @@ function getPrimitiveType(typeNode: ts.TypeNode): Type | undefined {
             default:
                 return { typeName: 'double' };
         }
+    } else if (primitiveType === 'string' && typeNode.parent) {
+        const enumMembers = getDecoratorArguments(typeNode.parent, t => t.text === 'Enum');
+        if (enumMembers) {
+            return { typeName: primitiveType, enumMembers } as Type;
+        }
     }
     return { typeName: primitiveType };
 }
@@ -237,7 +245,9 @@ function getLiteralType(typeNode: ts.TypeNode): EnumerateType | undefined {
         .filter(node => (node as any).name.text === literalName);
 
     if (!literalTypes.length) { return undefined; }
-    if (literalTypes.length > 1) { throw new Error(`Multiple matching enum found for enum ${literalName}; please make enum names unique.`); }
+    if (literalTypes.length > 1) {
+        throw new Error(`Multiple matching enum found for enum ${literalName}; please make enum names unique.`);
+    }
 
     const unionTypes = (literalTypes[0] as any).type.types;
     return {
@@ -474,7 +484,7 @@ function resolveModelTypeScope(leftmost: ts.EntityNameOrEntityNameExpression, st
     if (moduleParent && 'statements' in moduleParent.body) {
         return moduleParent.body.statements;
     }
-    if (leftmost.parent && leftmost.parent.kind === ts.SyntaxKind.PropertyAccessExpression) {
+    if (leftmost.parent && (leftmost.parent.kind === ts.SyntaxKind.PropertyAccessExpression || leftmost.parent.kind === ts.SyntaxKind.QualifiedName)) {
         statements = statements
             .map(n => n as ts.ModuleDeclaration)
             .filter(n => n.kind === ts.SyntaxKind.ModuleDeclaration && n.name.text === ((leftmost as ts.Identifier).text || (leftmost as ts.Identifier).escapedText) && 'statements' in n.body)
@@ -503,7 +513,9 @@ function getModelTypeDeclaration(type: ts.EntityNameOrEntityNameExpression) {
             return (modelTypeDeclaration.name as ts.Identifier).text === typeName;
         }) as Array<UsableDeclaration>;
 
-    if (!modelTypes.length) { throw new Error(`No matching model found for referenced type ${typeName}`); }
+    if (!modelTypes.length) {
+        throw new Error(`No matching model found for referenced type ${typeName}`);
+    }
     // if (modelTypes.length > 1) {
     //     const conflicts = modelTypes.map(modelType => modelType.getSourceFile().fileName).join('"; "');
     //     throw new Error(`Multiple matching models found for referenced type ${typeName}; please make model names unique. Conflicts found: "${conflicts}"`);

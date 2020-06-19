@@ -141,6 +141,12 @@ function getPrimitiveType(typeNode) {
                 return { typeName: 'double' };
         }
     }
+    else if (primitiveType === 'string' && typeNode.parent) {
+        var enumMembers = decoratorUtils_1.getDecoratorArguments(typeNode.parent, function (t) { return t.text === 'Enum'; });
+        if (enumMembers) {
+            return { typeName: primitiveType, enumMembers: enumMembers };
+        }
+    }
     return { typeName: primitiveType };
 }
 function getDateType(typeNode) {
@@ -457,7 +463,7 @@ function resolveModelTypeScope(leftmost, statements) {
     if (moduleParent && 'statements' in moduleParent.body) {
         return moduleParent.body.statements;
     }
-    if (leftmost.parent && leftmost.parent.kind === ts.SyntaxKind.PropertyAccessExpression) {
+    if (leftmost.parent && (leftmost.parent.kind === ts.SyntaxKind.PropertyAccessExpression || leftmost.parent.kind === ts.SyntaxKind.QualifiedName)) {
         statements = statements
             .map(function (n) { return n; })
             .filter(function (n) { return n.kind === ts.SyntaxKind.ModuleDeclaration && n.name.text === (leftmost.text || leftmost.escapedText) && 'statements' in n.body; })

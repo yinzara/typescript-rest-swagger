@@ -5,6 +5,7 @@ export declare function getDecoratorTextValue(node: ts.Node, isMatching: (identi
 export declare function getDecoratorOptions(node: ts.Node, isMatching: (identifier: DecoratorData) => boolean): {
     [key: string]: any;
 };
+export declare function getDecoratorArguments(node: ts.Node, isMatching: (identifier: DecoratorData) => boolean): any[];
 export declare function isDecorator(node: ts.Node, isMatching: (identifier: DecoratorData) => boolean): boolean;
 export interface DecoratorData {
     text: string;

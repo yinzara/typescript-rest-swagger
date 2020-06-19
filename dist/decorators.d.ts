@@ -84,3 +84,13 @@ export declare function IsFloat(target: any, propertyKey: string, parameterIndex
  * This is the default for `number` types without a specifying decorator.
  */
 export declare function IsDouble(target: any, propertyKey: string, parameterIndex?: number): void;
+/**
+ * Decorator to provide enum values for a string field dynamically
+ * Can only be used as a decorator and not as a JSDoc comment
+ *
+ * @Enum('A_VALUE', 'ANOTHER')
+ * OR
+ * const { getEnumValues } = require("./another-module")
+ * @Enum(...getEnumValues())
+ */
+export declare function Enum(...values: Array<string>): any;

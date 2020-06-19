@@ -115,3 +115,16 @@ export function IsFloat(target: any, propertyKey: string, parameterIndex?: numbe
 export function IsDouble(target: any, propertyKey: string, parameterIndex?: number) {
   return;
 }
+
+/**
+ * Decorator to provide enum values for a string field dynamically
+ * Can only be used as a decorator and not as a JSDoc comment
+ *
+ * @Enum('A_VALUE', 'ANOTHER')
+ * OR
+ * const { getEnumValues } = require("./another-module")
+ * @Enum(...getEnumValues())
+ */
+export function Enum(...values: Array<string>): any {
+    return () => { return; };
+}

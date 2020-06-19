@@ -56,6 +56,11 @@ export function getDecoratorOptions(node: ts.Node, isMatching: (identifier: Deco
     return decorator && typeof decorator.arguments[1] === 'object' ? decorator.arguments[1] as { [key: string]: any } : undefined;
 }
 
+export function getDecoratorArguments(node: ts.Node, isMatching: (identifier: DecoratorData) => boolean) {
+    const decorator = getDecorator(node, isMatching);
+    return decorator && decorator.arguments.length > 0 ? decorator.arguments : undefined;
+}
+
 export function isDecorator(node: ts.Node, isMatching: (identifier: DecoratorData) => boolean) {
     const decorators = getDecorators(node, isMatching);
     if (!decorators || !decorators.length) {

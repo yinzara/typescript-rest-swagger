@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isDecorator = exports.getDecoratorOptions = exports.getDecoratorTextValue = exports.getDecoratorName = exports.getDecorators = void 0;
+exports.isDecorator = exports.getDecoratorArguments = exports.getDecoratorOptions = exports.getDecoratorTextValue = exports.getDecoratorName = exports.getDecorators = void 0;
 var ts = require("typescript");
 function getDecorators(node, isMatching) {
     var decorators = node.decorators;
@@ -61,6 +61,11 @@ function getDecoratorOptions(node, isMatching) {
     return decorator && typeof decorator.arguments[1] === 'object' ? decorator.arguments[1] : undefined;
 }
 exports.getDecoratorOptions = getDecoratorOptions;
+function getDecoratorArguments(node, isMatching) {
+    var decorator = getDecorator(node, isMatching);
+    return decorator && decorator.arguments.length > 0 ? decorator.arguments : undefined;
+}
+exports.getDecoratorArguments = getDecoratorArguments;
 function isDecorator(node, isMatching) {
     var decorators = getDecorators(node, isMatching);
     if (!decorators || !decorators.length) {
