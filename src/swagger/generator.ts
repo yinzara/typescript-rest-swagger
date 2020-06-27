@@ -282,9 +282,7 @@ export class SpecGenerator {
             .filter(property => !ignoreProperties.some(prop => mm(property.name, prop)))
             .forEach(property => {
             const swaggerType = this.getSwaggerType(property.type);
-            if (!swaggerType.$ref) {
-                swaggerType.description = property.description;
-            }
+            swaggerType.description = property.description;
             swaggerProperties[property.name] = swaggerType;
         });
 
@@ -410,7 +408,7 @@ export class SpecGenerator {
     }
 
     private getSwaggerOneOfType(oneOfType: Type): Swagger.Schema {
-        return { oneOf: oneOfType.types.map(t => this.getSwaggerType(t))}
+        return { oneOf: oneOfType.types.map(t => this.getSwaggerType(t))};
     }
 
     private getSwaggerTypeForObjectType(objectType: ObjectType): Swagger.Schema {

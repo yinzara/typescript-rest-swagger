@@ -3,7 +3,7 @@ import * as ts from 'typescript';
 import {
     getDecoratorName,
     getDecoratorArguments
-} from '../utils/decoratorUtils'
+} from '../utils/decoratorUtils';
 import { getFirstMatchingJSDocTagName } from '../utils/jsDocUtils';
 import { ArrayType, EnumerateType, MetadataGenerator, ObjectType, Property, ReferenceType, Type } from './metadataGenerator';
 
@@ -141,7 +141,7 @@ function getPrimitiveType(typeNode: ts.TypeNode): Type | undefined {
     } else if (primitiveType === 'string' && typeNode.parent) {
         const enumMembers = getDecoratorArguments(typeNode.parent, t => t.text === 'Enum');
         if (enumMembers) {
-            return { typeName: primitiveType, enumMembers } as Type;
+            return { typeName: primitiveType, enumMembers: enumMembers } as Type;
         }
     }
     return { typeName: primitiveType };
@@ -211,7 +211,7 @@ function getUnionType(typeNode: ts.TypeNode, genericTypeMap: Map<String, ts.Type
         }
     });
     if (isObject) {
-        return getParenthizedType(typeNode, genericTypeMap)
+        return getParenthizedType(typeNode, genericTypeMap);
     }
     return {
         enumMembers: union.types.map((type, index) => {
@@ -488,7 +488,7 @@ function resolveModelTypeScope(leftmost: ts.EntityNameOrEntityNameExpression, st
             .map(n => n as ts.ModuleDeclaration)
             .filter(n => n.kind === ts.SyntaxKind.ModuleDeclaration && n.name.text === ((leftmost as ts.Identifier).text || (leftmost as ts.Identifier).escapedText) && 'statements' in n.body)
             .map(n => 'statements' in n.body && n.body.statements)
-            .reduce((prev,next)=>prev||next);
+            .reduce((prev,next)=>next||prev, statements);
     }
 
     return statements;

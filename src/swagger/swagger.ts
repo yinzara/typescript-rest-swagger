@@ -88,7 +88,7 @@ export namespace Swagger {
         options?: Operation;
         head?: Operation;
         patch?: Operation;
-        parameters?: Parameter[];
+        parameters?: Array<Parameter>;
     }
 
     export interface Operation {
@@ -97,13 +97,13 @@ export namespace Swagger {
         description?: string;
         externalDocs?: ExternalDocs;
         operationId?: string;
-        produces?: string[];
-        consumes?: string[];
-        parameters?: Parameter[];
-        schemes?: string[];
+        produces?: Array<string>;
+        consumes?: Array<string>;
+        parameters?: Array<Parameter>;
+        schemes?: Array<string>;
         deprecated?: boolean;
-        security?: Security[];
-        tags?: string[];
+        security?: Array<Security>;
+        tags?: Array<string>;
     }
 
     export interface Response {
@@ -131,16 +131,16 @@ export namespace Swagger {
         uniqueItems?: boolean;
         maxProperties?: number;
         minProperties?: number;
-        enum?: string[];
+        enum?: Array<string>;
         type?: string;
-        items?: Schema | Schema[];
+        items?: Schema | Array<Schema>;
     }
 
     export interface Schema extends BaseSchema {
         $ref?: string;
-        allOf?: Schema[];
-        oneOf?: Schema[];
-        anyOf?: Schema[];
+        allOf?: Array<Schema>;
+        oneOf?: Array<Schema>;
+        anyOf?: Array<Schema>;
         additionalProperties?: boolean | { [ref: string]: string };
         properties?: { [propertyName: string]: Schema };
         discriminator?: string;
@@ -213,15 +213,15 @@ export namespace Swagger {
         externalDocs?: ExternalDocs;
         host?: string;
         basePath?: string;
-        schemes?: string[];
-        consumes?: string[];
-        produces?: string[];
+        schemes?: Array<string>;
+        consumes?: Array<string>;
+        produces?: Array<string>;
         paths: { [pathName: string]: Path };
         definitions?: { [definitionsName: string]: Schema };
         parameters?: { [parameterName: string]: BodyParameter | QueryParameter };
         responses?: { [responseName: string]: Response };
-        security?: Security[];
+        security?: Array<Security>;
         securityDefinitions?: { [securityDefinitionName: string]: Security };
-        tags?: Tag[];
+        tags?: Array<Tag>;
     }
 }

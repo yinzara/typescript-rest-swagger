@@ -467,7 +467,7 @@ function resolveModelTypeScope(leftmost, statements) {
             .map(function (n) { return n; })
             .filter(function (n) { return n.kind === ts.SyntaxKind.ModuleDeclaration && n.name.text === (leftmost.text || leftmost.escapedText) && 'statements' in n.body; })
             .map(function (n) { return 'statements' in n.body && n.body.statements; })
-            .reduce(function (prev, next) { return prev || next; });
+            .reduce(function (prev, next) { return next || prev; }, statements);
     }
     return statements;
 }
