@@ -504,6 +504,12 @@ function getModelTypeProperties(node, genericTypes) {
             }
             return member.kind === ts.SyntaxKind.PropertySignature;
         })
+            .filter(function (member) {
+            var hidden = jsDocUtils_1.getFirstMatchingJSDocTagName(member, function (tag) {
+                return tag.tagName.text === 'Hidden';
+            });
+            return !hidden;
+        })
             .map(function (member) {
             var propertyDeclaration = member;
             var identifier = propertyDeclaration.name;

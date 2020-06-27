@@ -353,7 +353,15 @@ var SpecGenerator = /** @class */ (function () {
             .filter(function (property) { return !ignoreProperties.some(function (prop) { return mm(property.name, prop); }); })
             .forEach(function (property) {
             var swaggerType = _this.getSwaggerType(property.type);
-            swaggerType.description = property.description;
+            if (!swaggerType.$ref) {
+                swaggerType.description = property.description;
+            }
+            else if (property.description) {
+                swaggerType = {
+                    allOf: [swaggerType],
+                    description: property.description
+                };
+            }
             swaggerProperties[property.name] = swaggerType;
         });
         return swaggerProperties;

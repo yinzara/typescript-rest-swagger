@@ -533,6 +533,12 @@ function getModelTypeProperties(node: any, genericTypes?: Array<ts.TypeNode>): A
                 }
                 return member.kind === ts.SyntaxKind.PropertySignature;
             })
+            .filter((member: any) => {
+                const hidden = getFirstMatchingJSDocTagName(member, tag => {
+                    return tag.tagName.text === 'Hidden';
+                });
+                return !hidden;
+            })
             .map((member: any) => {
 
                 const propertyDeclaration = member as ts.PropertyDeclaration;
