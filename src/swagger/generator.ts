@@ -12,6 +12,8 @@ import {
 } from '../metadata/metadataGenerator';
 import { Swagger } from './swagger';
 
+type Definitions = { [definitionsName: string]: Swagger.Schema };
+
 export class SpecGenerator {
     private debugger = debug('typescript-rest-swagger:spec-generator');
 
@@ -54,11 +56,12 @@ export class SpecGenerator {
     }
 
     public getSwaggerSpec() {
+        const definitions = this.buildDefinitions();
         let spec: Swagger.Spec = {
             basePath: this.config.basePath,
-            definitions: this.buildDefinitions(),
+            definitions: definitions,
             info: {},
-            paths: this.buildPaths(),
+            paths: this.buildPaths(definitions),
             swagger: '2.0'
         };
 
@@ -99,8 +102,8 @@ export class SpecGenerator {
     }
 
 
-    private buildDefinitions() {
-        const definitions: { [definitionsName: string]: Swagger.Schema } = {};
+    private buildDefinitions(): Definitions {
+        const definitions: Definitions = {};
         const ignoreTypes = this.config.ignoreTypes || [];
         const includeTypes = this.config.includeTypes;
 
@@ -147,7 +150,7 @@ export class SpecGenerator {
         return definitions;
     }
 
-    private buildPaths() {
+    private buildPaths(definitions: Definitions) {
         const paths: { [pathName: string]: Swagger.Path } = {};
 
         this.debugger('Generating paths declarations');
@@ -163,7 +166,7 @@ export class SpecGenerator {
                 method.security = method.security || controller.security;
                 method.responses = _.union(controller.responses, method.responses);
                 const pathObject: any = paths[path];
-                pathObject[method.method] = this.buildPathMethod(controller.name, method);
+                pathObject[method.method] = this.buildPathMethod(controller.name, definitions, method);
                 this.debugger('Generated path for method %s: %j', method.name, pathObject[method.method]);
             });
         });
@@ -171,7 +174,7 @@ export class SpecGenerator {
         return paths;
     }
 
-    private buildPathMethod(controllerName: string, method: Method) {
+    private buildPathMethod(controllerName: string, definitions: Definitions, method: Method) {
         const pathMethod: any = this.buildOperation(controllerName, method);
         pathMethod.description = method.description;
         if (method.summary) {
@@ -190,6 +193,14 @@ export class SpecGenerator {
         pathMethod.parameters = method.parameters
             .filter(p => (p.in !== 'param'))
             .map(p => this.buildParameter(p));
+
+        if ((!pathMethod.description || pathMethod.description === '')) {
+            pathMethod.description = method.parameters
+                .filter(p => (p.in === 'body'))
+                .map(p => definitions[p.type.typeName])
+                .map(d => d && d.description)
+                .find(d => d) || '';
+        }
 
         method.parameters
             .filter(p => (p.in === 'param'))
@@ -253,6 +264,10 @@ export class SpecGenerator {
         const parameterType = this.getSwaggerType(parameter.type);
         if (parameterType.$ref || parameter.in === 'body') {
             swaggerParameter.schema = parameterType;
+            if (swaggerParameter.description === '') {
+                swaggerParameter.description = parameterType.description;
+                parameterType.description = '';
+            }
         } else {
             swaggerParameter.type = parameterType.type;
 

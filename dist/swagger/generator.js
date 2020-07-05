@@ -110,11 +110,12 @@ var SpecGenerator = /** @class */ (function () {
         });
     };
     SpecGenerator.prototype.getSwaggerSpec = function () {
+        var definitions = this.buildDefinitions();
         var spec = {
             basePath: this.config.basePath,
-            definitions: this.buildDefinitions(),
+            definitions: definitions,
             info: {},
-            paths: this.buildPaths(),
+            paths: this.buildPaths(definitions),
             swagger: '2.0'
         };
         spec.securityDefinitions = this.config.securityDefinitions
@@ -217,7 +218,7 @@ var SpecGenerator = /** @class */ (function () {
         });
         return definitions;
     };
-    SpecGenerator.prototype.buildPaths = function () {
+    SpecGenerator.prototype.buildPaths = function (definitions) {
         var _this = this;
         var paths = {};
         this.debugger('Generating paths declarations');
@@ -233,13 +234,13 @@ var SpecGenerator = /** @class */ (function () {
                 method.security = method.security || controller.security;
                 method.responses = _.union(controller.responses, method.responses);
                 var pathObject = paths[path];
-                pathObject[method.method] = _this.buildPathMethod(controller.name, method);
+                pathObject[method.method] = _this.buildPathMethod(controller.name, definitions, method);
                 _this.debugger('Generated path for method %s: %j', method.name, pathObject[method.method]);
             });
         });
         return paths;
     };
-    SpecGenerator.prototype.buildPathMethod = function (controllerName, method) {
+    SpecGenerator.prototype.buildPathMethod = function (controllerName, definitions, method) {
         var _this = this;
         var pathMethod = this.buildOperation(controllerName, method);
         pathMethod.description = method.description;
@@ -264,6 +265,13 @@ var SpecGenerator = /** @class */ (function () {
         pathMethod.parameters = method.parameters
             .filter(function (p) { return (p.in !== 'param'); })
             .map(function (p) { return _this.buildParameter(p); });
+        if ((!pathMethod.description || pathMethod.description === '')) {
+            pathMethod.description = method.parameters
+                .filter(function (p) { return (p.in === 'body'); })
+                .map(function (p) { return definitions[p.type.typeName]; })
+                .map(function (d) { return d && d.description; })
+                .find(function (d) { return d; }) || '';
+        }
         method.parameters
             .filter(function (p) { return (p.in === 'param'); })
             .forEach(function (p) {
@@ -324,6 +332,10 @@ var SpecGenerator = /** @class */ (function () {
         var parameterType = this.getSwaggerType(parameter.type);
         if (parameterType.$ref || parameter.in === 'body') {
             swaggerParameter.schema = parameterType;
+            if (swaggerParameter.description === '') {
+                swaggerParameter.description = parameterType.description;
+                parameterType.description = '';
+            }
         }
         else {
             swaggerParameter.type = parameterType.type;
