@@ -47,6 +47,9 @@ function resolveType(typeNode, genericTypeMap) {
     if (typeNode.kind === ts.SyntaxKind.ParenthesizedType && typeNode.type.kind === ts.SyntaxKind.UnionType) {
         return getParenthizedType(typeNode.type, genericTypeMap);
     }
+    if (typeNode.kind === ts.SyntaxKind.LiteralType && typeNode.literal && typeNode.literal.text) {
+        return { typeName: 'enum', enumMembers: [typeNode.literal.text] };
+    }
     if (typeNode.kind !== ts.SyntaxKind.TypeReference) {
         throw new Error("Unknown type: " + ts.SyntaxKind[typeNode.kind]);
     }
@@ -85,7 +88,7 @@ function resolveType(typeNode, genericTypeMap) {
     if (enumType) {
         return enumType;
     }
-    var literalType = getLiteralType(typeNode);
+    var literalType = getLiteralType(typeNode, genericTypeMap);
     if (literalType) {
         return literalType;
     }
@@ -205,7 +208,7 @@ function getUnionType(typeNode, genericTypeMap) {
         if (baseType === null) {
             baseType = type;
         }
-        if (baseType.kind !== type.kind) {
+        if (type.kind === ts.SyntaxKind.TypeReference || baseType.kind !== type.kind) {
             isObject = true;
         }
     });
@@ -230,7 +233,7 @@ function getParenthizedType(typeNode, genericTypeMap) {
 function removeQuotes(str) {
     return str.replace(/^["']|["']$/g, '');
 }
-function getLiteralType(typeNode) {
+function getLiteralType(typeNode, genericTypeMap) {
     var literalName = typeNode.typeName.text;
     var literalTypes = metadataGenerator_1.MetadataGenerator.current.nodes
         .filter(function (node) { return node.kind === ts.SyntaxKind.TypeAliasDeclaration; })
@@ -243,16 +246,21 @@ function getLiteralType(typeNode) {
         return undefined;
     }
     if (literalTypes.length > 1) {
-        throw new Error("Multiple matching enum found for enum " + literalName + "; please make enum names unique.");
+        throw new Error("Multiple matching types found for enum " + literalName + "; please make type names unique.");
     }
-    var unionTypes = literalTypes[0].type.types;
-    return {
-        enumMembers: unionTypes.map(function (unionNode) {
-            return unionNode.literal && unionNode.literal.text ||
-                unionNode.typeName && unionNode.typeName.escapedText;
-        }),
-        typeName: 'enum',
-    };
+    var unionType = literalTypes[0].type;
+    var unionTypes = unionType.types;
+    var firstType = unionTypes[0];
+    if (firstType.literal && firstType.literal.kind === 10) { // string literal union (probably an enum)
+        return {
+            enumMembers: unionTypes.map(function (unionNode) {
+                return unionNode.literal && unionNode.literal.text ||
+                    unionNode.typeName && unionNode.typeName.escapedText;
+            }),
+            typeName: 'enum',
+        };
+    }
+    return getParenthizedType(unionType, genericTypeMap);
 }
 function getInlineObjectType(typeNode) {
     var type = {

@@ -50,6 +50,10 @@ export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String,
         return getParenthizedType((typeNode as any).type, genericTypeMap);
     }
 
+    if (typeNode.kind === ts.SyntaxKind.LiteralType && (typeNode as any).literal && (typeNode as any).literal.text) {
+        return { typeName: 'enum', enumMembers: [(typeNode as any).literal.text] } as EnumerateType
+    }
+
     if (typeNode.kind !== ts.SyntaxKind.TypeReference) {
         throw new Error(`Unknown type: ${ts.SyntaxKind[typeNode.kind]}`);
     }
@@ -80,7 +84,7 @@ export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String,
         return enumType;
     }
 
-    const literalType = getLiteralType(typeNode);
+    const literalType = getLiteralType(typeNode, genericTypeMap);
     if (literalType) {
         return literalType;
     }
@@ -206,7 +210,7 @@ function getUnionType(typeNode: ts.TypeNode, genericTypeMap: Map<String, ts.Type
         if (baseType === null) {
             baseType = type;
         }
-        if (baseType.kind !== type.kind) {
+        if (type.kind === ts.SyntaxKind.TypeReference || baseType.kind !== type.kind) {
             isObject = true;
         }
     });
@@ -221,7 +225,7 @@ function getUnionType(typeNode: ts.TypeNode, genericTypeMap: Map<String, ts.Type
     } as EnumerateType;
 }
 
-function getParenthizedType(typeNode: ts.TypeNode, genericTypeMap: Map<String, ts.TypeNode> | undefined) {
+function getParenthizedType(typeNode: ts.TypeNode, genericTypeMap: Map<String, ts.TypeNode> | undefined): Type | undefined {
     const union = typeNode as ts.UnionTypeNode;
     return {
         typeName: 'oneOf',
@@ -233,7 +237,7 @@ function getParenthizedType(typeNode: ts.TypeNode, genericTypeMap: Map<String, t
 function removeQuotes(str: string) {
     return str.replace(/^["']|["']$/g, '');
 }
-function getLiteralType(typeNode: ts.TypeNode): EnumerateType | undefined {
+function getLiteralType(typeNode: ts.TypeNode, genericTypeMap: Map<String, ts.TypeNode> | undefined): Type | undefined {
     const literalName = (typeNode as any).typeName.text;
     const literalTypes = MetadataGenerator.current.nodes
         .filter(node => node.kind === ts.SyntaxKind.TypeAliasDeclaration)
@@ -245,16 +249,21 @@ function getLiteralType(typeNode: ts.TypeNode): EnumerateType | undefined {
 
     if (!literalTypes.length) { return undefined; }
     if (literalTypes.length > 1) {
-        throw new Error(`Multiple matching enum found for enum ${literalName}; please make enum names unique.`);
+        throw new Error(`Multiple matching types found for enum ${literalName}; please make type names unique.`);
     }
 
-    const unionTypes = (literalTypes[0] as any).type.types;
-    return {
-        enumMembers: unionTypes.map((unionNode: any) =>
-            unionNode.literal && unionNode.literal.text ||
-            unionNode.typeName && unionNode.typeName.escapedText as string),
-        typeName: 'enum',
-    } as EnumerateType;
+    const unionType = (literalTypes[0] as any).type;
+    const unionTypes = unionType.types;
+    const firstType = unionTypes[0];
+    if (firstType.literal && firstType.literal.kind === 10) { // string literal union (probably an enum)
+        return {
+            enumMembers: unionTypes.map((unionNode: any) =>
+                unionNode.literal && unionNode.literal.text ||
+                unionNode.typeName && unionNode.typeName.escapedText as string),
+            typeName: 'enum',
+        } as EnumerateType;
+    }
+    return getParenthizedType(unionType, genericTypeMap);
 }
 
 function getInlineObjectType(typeNode: ts.TypeNode): ObjectType {
