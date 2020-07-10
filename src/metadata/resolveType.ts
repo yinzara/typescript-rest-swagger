@@ -46,7 +46,11 @@ export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String,
         return getUnionType(typeNode, genericTypeMap);
     }
 
-    if (typeNode.kind === ts.SyntaxKind.ParenthesizedType && (typeNode as any).type.kind === ts.SyntaxKind.UnionType) {
+    if (typeNode.kind === ts.SyntaxKind.IntersectionType) {
+        return getIntersectionType(typeNode, genericTypeMap)
+    }
+
+    if (typeNode.kind === ts.SyntaxKind.ParenthesizedType) {
         return getParenthizedType((typeNode as any).type, genericTypeMap);
     }
 
@@ -225,13 +229,30 @@ function getUnionType(typeNode: ts.TypeNode, genericTypeMap: Map<String, ts.Type
     } as EnumerateType;
 }
 
+function getIntersectionType(typeNode: ts.TypeNode, genericTypeMap: Map<String, ts.TypeNode> | undefined): Type| undefined {
+    if (typeNode.kind === ts.SyntaxKind.IntersectionType) {
+        const intersection = typeNode as ts.IntersectionTypeNode;
+        return {
+            typeName: 'allOf',
+            types: intersection.types
+                .map(t => resolveType(t, genericTypeMap)),
+        };
+    } else {
+        return undefined;
+    }
+}
+
 function getParenthizedType(typeNode: ts.TypeNode, genericTypeMap: Map<String, ts.TypeNode> | undefined): Type | undefined {
-    const union = typeNode as ts.UnionTypeNode;
-    return {
-        typeName: 'oneOf',
-        types: union.types
-            .map(t => resolveType(t, genericTypeMap)),
-    };
+    if (typeNode.kind === ts.SyntaxKind.UnionType) {
+        const union = typeNode as ts.UnionTypeNode;
+        return {
+            typeName: 'oneOf',
+            types: union.types
+                .map(t => resolveType(t, genericTypeMap)),
+        };
+    } else {
+        return getIntersectionType(typeNode, genericTypeMap)
+    }
 }
 
 function removeQuotes(str: string) {

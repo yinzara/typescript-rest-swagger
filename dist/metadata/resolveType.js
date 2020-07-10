@@ -44,7 +44,10 @@ function resolveType(typeNode, genericTypeMap) {
     if (typeNode.kind === ts.SyntaxKind.UnionType) {
         return getUnionType(typeNode, genericTypeMap);
     }
-    if (typeNode.kind === ts.SyntaxKind.ParenthesizedType && typeNode.type.kind === ts.SyntaxKind.UnionType) {
+    if (typeNode.kind === ts.SyntaxKind.IntersectionType) {
+        return getIntersectionType(typeNode, genericTypeMap);
+    }
+    if (typeNode.kind === ts.SyntaxKind.ParenthesizedType) {
         return getParenthizedType(typeNode.type, genericTypeMap);
     }
     if (typeNode.kind === ts.SyntaxKind.LiteralType && typeNode.literal && typeNode.literal.text) {
@@ -222,13 +225,31 @@ function getUnionType(typeNode, genericTypeMap) {
         typeName: 'enum',
     };
 }
+function getIntersectionType(typeNode, genericTypeMap) {
+    if (typeNode.kind === ts.SyntaxKind.IntersectionType) {
+        var intersection = typeNode;
+        return {
+            typeName: 'allOf',
+            types: intersection.types
+                .map(function (t) { return resolveType(t, genericTypeMap); }),
+        };
+    }
+    else {
+        return undefined;
+    }
+}
 function getParenthizedType(typeNode, genericTypeMap) {
-    var union = typeNode;
-    return {
-        typeName: 'oneOf',
-        types: union.types
-            .map(function (t) { return resolveType(t, genericTypeMap); }),
-    };
+    if (typeNode.kind === ts.SyntaxKind.UnionType) {
+        var union = typeNode;
+        return {
+            typeName: 'oneOf',
+            types: union.types
+                .map(function (t) { return resolveType(t, genericTypeMap); }),
+        };
+    }
+    else {
+        return getIntersectionType(typeNode, genericTypeMap);
+    }
 }
 function removeQuotes(str) {
     return str.replace(/^["']|["']$/g, '');
