@@ -47,7 +47,7 @@ export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String,
     }
 
     if (typeNode.kind === ts.SyntaxKind.IntersectionType) {
-        return getIntersectionType(typeNode, genericTypeMap)
+        return getIntersectionType(typeNode, genericTypeMap);
     }
 
     if (typeNode.kind === ts.SyntaxKind.ParenthesizedType) {
@@ -62,6 +62,7 @@ export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String,
         throw new Error(`Unknown type: ${ts.SyntaxKind[typeNode.kind]}`);
     }
     let typeReference: any = typeNode;
+    let isPartial = false;
     let typeName = resolveSimpleTypeName(typeReference.typeName as ts.EntityName);
 
     if (typeName === 'Date') { return getDateType(typeNode); }
@@ -70,6 +71,17 @@ export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String,
     if (typeName === 'DownloadResource') { return { typeName: 'buffer' }; }
     if (typeName === 'string') { return { typeName: 'string' }; }
     if (typeName === 'number') { return { typeName: 'number' }; }
+    if (typeName === 'Partial') {
+        isPartial = true;
+        const subtype = typeReference.typeArguments[0];
+        const resolved = resolveType(subtype, genericTypeMap);
+        if (subtype.kind === ts.SyntaxKind.TypeReference) {
+            typeReference = subtype;
+            typeName = resolveSimpleTypeName(typeReference.typeName as ts.EntityName);
+        } else {
+            return resolved;
+        }
+    }
 
     if (typeName === 'Promise') {
         typeReference = typeReference.typeArguments[0];
@@ -108,6 +120,10 @@ export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String,
     } else {
         referenceType = getReferenceType(typeReference.typeName as ts.EntityName, genericTypeMap);
         MetadataGenerator.current.addReferenceType(referenceType);
+    }
+
+    if (isPartial && referenceType.properties) {
+        referenceType.properties.forEach(p => p.required = false);
     }
 
     return referenceType;
@@ -251,7 +267,7 @@ function getParenthizedType(typeNode: ts.TypeNode, genericTypeMap: Map<String, t
                 .map(t => resolveType(t, genericTypeMap)),
         };
     } else {
-        return getIntersectionType(typeNode, genericTypeMap)
+        return getIntersectionType(typeNode, genericTypeMap);
     }
 }
 

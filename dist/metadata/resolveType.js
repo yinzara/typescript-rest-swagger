@@ -57,6 +57,7 @@ function resolveType(typeNode, genericTypeMap) {
         throw new Error("Unknown type: " + ts.SyntaxKind[typeNode.kind]);
     }
     var typeReference = typeNode;
+    var isPartial = false;
     var typeName = resolveSimpleTypeName(typeReference.typeName);
     if (typeName === 'Date') {
         return getDateType(typeNode);
@@ -75,6 +76,18 @@ function resolveType(typeNode, genericTypeMap) {
     }
     if (typeName === 'number') {
         return { typeName: 'number' };
+    }
+    if (typeName === 'Partial') {
+        isPartial = true;
+        var subtype = typeReference.typeArguments[0];
+        var resolved = resolveType(subtype, genericTypeMap);
+        if (subtype.kind === ts.SyntaxKind.TypeReference) {
+            typeReference = subtype;
+            typeName = resolveSimpleTypeName(typeReference.typeName);
+        }
+        else {
+            return resolved;
+        }
     }
     if (typeName === 'Promise') {
         typeReference = typeReference.typeArguments[0];
@@ -111,6 +124,9 @@ function resolveType(typeNode, genericTypeMap) {
     else {
         referenceType = getReferenceType(typeReference.typeName, genericTypeMap);
         metadataGenerator_1.MetadataGenerator.current.addReferenceType(referenceType);
+    }
+    if (isPartial && referenceType.properties) {
+        referenceType.properties.forEach(function (p) { return p.required = false; });
     }
     return referenceType;
 }
