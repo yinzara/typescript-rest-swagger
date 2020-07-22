@@ -377,7 +377,7 @@ function getReferenceType(type: ts.EntityNameOrEntityNameExpression, genericType
 
         return referenceType;
     } catch (err) {
-        console.error(`There was a problem resolving type of '${getTypeName(typeName, genericTypes)}'.`);
+        console.error(`There was a problem resolving type of '${getTypeName(typeName, genericTypes)}' in file '${getSourceFilename(type)}'.`);
         throw err;
     }
 }
@@ -426,6 +426,16 @@ function resolveSimpleTypeName(type: ts.EntityName): string {
 function getTypeName(typeName: string, genericTypes?: Array<ts.TypeNode>): string {
     if (!genericTypes || !genericTypes.length) { return typeName; }
     return typeName + genericTypes.map(t => getAnyTypeName(t)).join('');
+}
+
+function getSourceFilename(typeNode: ts.Node): string {
+    if (typeNode.kind === ts.SyntaxKind.SourceFile) {
+        return (typeNode as ts.SourceFile).fileName
+    } else if (typeNode.parent) {
+        return getSourceFilename(typeNode.parent)
+    } else {
+        return "Unknown"
+    }
 }
 
 function getAnyTypeName(typeNode: ts.TypeNode): string {
