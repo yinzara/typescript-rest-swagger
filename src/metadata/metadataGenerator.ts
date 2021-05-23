@@ -1,10 +1,10 @@
-import * as debug from 'debug';
-import * as glob from 'glob';
-import * as _ from 'lodash';
-import * as mm from 'minimatch';
-import * as ts from 'typescript';
-import { isDecorator } from '../utils/decoratorUtils';
-import { ControllerGenerator } from './controllerGenerator';
+import debug from 'debug';
+import glob from 'glob';
+import _ from 'lodash';
+import mm from 'minimatch';
+import ts from 'typescript';
+import { isDecorator } from '../utils/decoratorUtils.js';
+import { ControllerGenerator } from './controllerGenerator.js';
 
 export class MetadataGenerator {
     public static current: MetadataGenerator;

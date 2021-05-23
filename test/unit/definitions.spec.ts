@@ -143,7 +143,7 @@ describe('Definition generation', () => {
       expect(param.name).toEqual('id');
       expect(param.required).toEqual(true);
       expect(param.type).toEqual('array');
-      expect(param.items).toBeDefined;
+      expect(param.items).toBeDefined();
       expect(param.items.type).toEqual('string');
       expect(param.collectionFormat).toEqual('multi');
     });
@@ -153,7 +153,7 @@ describe('Definition generation', () => {
       expect(param.name).toEqual('name');
       expect(param.required).toEqual(false);
       expect(param.type).toEqual('array');
-      expect(param.items).toBeDefined;
+      expect(param.items).toBeDefined();
       expect(param.items.type).toEqual('string');
       expect(param.collectionFormat).toEqual('multi');
     });
@@ -195,7 +195,7 @@ describe('Definition generation', () => {
       expect(param.name).toEqual('arr');
       expect(param.required).toEqual(false);
       expect(param.type).toEqual('array');
-      expect(param.items).toBeDefined;
+      expect(param.items).toBeDefined();
       expect(param.items.type).toEqual('string');
       expect(param.default).toStrictEqual(['a', 'b', 'c']);
     });
@@ -227,7 +227,7 @@ describe('Definition generation', () => {
 
     it('should ignore properties that are functions', () => {
       const expression = jsonata('definitions.SimpleHelloType.properties.comparePassword');
-      expect(expression.evaluate(spec)).toBeUndefined;
+      expect(expression.evaluate(spec)).toBeUndefined();
     });
 
     it('should support compilerOptions', () => {
@@ -344,7 +344,7 @@ describe('Definition generation', () => {
 
     it('should generate array type names as type + Array', () => {
       let expression = jsonata('definitions.ResponseBodystringArray');
-      expect(expression.evaluate(spec)).toBeUndefined;
+      expect(expression.evaluate(spec)).toBeUndefined();
       expression = jsonata('paths."/primitives/arrayNative".get.responses."200".schema."$ref"');
       expect(expression.evaluate(spec)).toEqual('#/definitions/ResponseBodystringArray');
       expression = jsonata('paths."/primitives/array".get.responses."200".schema."$ref"');

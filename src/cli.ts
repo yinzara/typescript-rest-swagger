@@ -2,19 +2,26 @@
 'use strict';
 
 import { ArgumentParser } from 'argparse';
-import * as debug from 'debug';
-import * as fs from 'fs-extra-promise';
-import * as _ from 'lodash';
+import debug from 'debug';
+import fs from 'fs-extra-promise';
+import _ from 'lodash';
 import { isAbsolute, join } from 'path';
-import * as ts from 'typescript';
-import * as YAML from 'js-yaml';
-import * as path from 'path';
-import { Config, Specification, SwaggerConfig } from './config';
-import { MetadataGenerator } from './metadata/metadataGenerator';
-import { SpecGenerator } from './swagger/generator';
+import ts from 'typescript';
+import YAML from 'js-yaml';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { Config, Specification, SwaggerConfig } from './config.js';
+import { MetadataGenerator } from './metadata/metadataGenerator.js';
+import { SpecGenerator } from './swagger/generator.js';
+import { readPackageSync } from "read-pkg";
+import Module from "module";
+
+const require = Module.createRequire(import.meta.url);
 
 const debugLog = debug('typescript-rest-swagger');
-const packageJson = require(`../package.json`);
+
+
+const packageJson = readPackageSync({cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..") });
 
 const workingDir: string = process.cwd();
 const versionDefault = getPackageJsonValue('version');
@@ -54,7 +61,7 @@ parser.addArgument(
 
 function getPackageJsonValue(key: string): string {
     try {
-        const projectPackageJson = require(`${workingDir}/package.json`);
+        const projectPackageJson = readPackageSync();
         return projectPackageJson[key] || '';
     } catch (err) {
         return '';
@@ -64,7 +71,7 @@ function getPackageJsonValue(key: string): string {
 async function getConfig(configPath = 'swagger.json'): Promise<Config> {
     const configFile = `${workingDir}/${configPath}`;
     if (_.endsWith(configFile, '.yml') || _.endsWith(configFile, '.yaml')) {
-        return YAML.load(configFile);
+        return YAML.load(configFile) as Config;
     } else if (_.endsWith(configFile, '.js') || _.endsWith(configFile, '.mjs') || _.endsWith(configFile, '.cjs')) {
         return import(path.join(configFile));
     }
@@ -86,7 +93,7 @@ function validateSwaggerConfig(conf: SwaggerConfig): SwaggerConfig {
     return conf;
 }
 
-function getCompilerOptions(loadTsconfig: boolean, tsconfigPath?: string | null): ts.CompilerOptions {
+async function getCompilerOptions(loadTsconfig: boolean, tsconfigPath?: string | null): Promise<ts.CompilerOptions> {
     if (!loadTsconfig && tsconfigPath) {
         loadTsconfig = true;
     }
@@ -128,7 +135,7 @@ function getAbsolutePath(pth: string, basePath: string): string {
 // actually run SpecGenerator
 (async () => {
     const parameters = parser.parseArgs();
-    const compilerOptions = getCompilerOptions(parameters.tsconfig, parameters.tsconfig_path);
+    const compilerOptions = await getCompilerOptions(parameters.tsconfig, parameters.tsconfig_path);
     debugLog('Starting Swagger generation tool');
     debugLog('Compiler Options: %j', compilerOptions);
 

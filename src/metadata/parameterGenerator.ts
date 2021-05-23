@@ -1,7 +1,7 @@
-import * as ts from 'typescript';
-import { getDecoratorName, getDecoratorOptions, getDecoratorTextValue } from '../utils/decoratorUtils';
-import { MetadataGenerator, Parameter, Type } from './metadataGenerator';
-import { getCommonPrimitiveAndArrayUnionType, getLiteralValue, resolveType } from './resolveType';
+import ts from 'typescript';
+import { getDecoratorName, getDecoratorOptions, getDecoratorTextValue } from '../utils/decoratorUtils.js';
+import { MetadataGenerator, Parameter, Type } from './metadataGenerator.js';
+import { getCommonPrimitiveAndArrayUnionType, getLiteralValue, resolveType } from './resolveType.js';
 
 export class ParameterGenerator {
     constructor(

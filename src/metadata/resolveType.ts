@@ -1,26 +1,33 @@
-import * as _ from 'lodash';
-import * as ts from 'typescript';
+import _ from 'lodash';
+import ts from 'typescript';
 import {
     getDecoratorName,
     getDecoratorArguments
-} from '../utils/decoratorUtils';
-import { getFirstMatchingJSDocTagName } from '../utils/jsDocUtils';
-import { ArrayType, EnumerateType, MetadataGenerator, ObjectType, Property, ReferenceType, Type } from './metadataGenerator';
+} from '../utils/decoratorUtils.js';
+import { getFirstMatchingJSDocTagName } from '../utils/jsDocUtils.js';
+import { ArrayType, EnumerateType, MetadataGenerator, ObjectType, Property, ReferenceType, Type } from './metadataGenerator.js';
 
-const syntaxKindMap: { [kind: number]: string } = {};
-syntaxKindMap[ts.SyntaxKind.NumberKeyword] = 'number';
-syntaxKindMap[ts.SyntaxKind.StringKeyword] = 'string';
-syntaxKindMap[ts.SyntaxKind.BooleanKeyword] = 'boolean';
-syntaxKindMap[ts.SyntaxKind.VoidKeyword] = 'void';
+let syntaxKindMap: { [kind: number]: string };
 
 const localReferenceTypeCache: { [typeName: string]: ReferenceType } = {};
 const inProgressTypes: { [typeName: string]: boolean } = {};
+
+function initSyntaxKindMap() {
+    if (!syntaxKindMap) {
+        syntaxKindMap = {};
+        syntaxKindMap[ts.SyntaxKind.NumberKeyword] = 'number';
+        syntaxKindMap[ts.SyntaxKind.StringKeyword] = 'string';
+        syntaxKindMap[ts.SyntaxKind.BooleanKeyword] = 'boolean';
+        syntaxKindMap[ts.SyntaxKind.VoidKeyword] = 'void';
+    }
+}
 
 type UsableDeclaration = ts.InterfaceDeclaration | ts.ClassDeclaration | ts.TypeAliasDeclaration;
 export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String, ts.TypeNode>): Type {
     if (!typeNode) {
         return { typeName: 'void' };
     }
+    initSyntaxKindMap();
     const primitiveType = getPrimitiveType(typeNode);
     if (primitiveType) {
         return primitiveType;

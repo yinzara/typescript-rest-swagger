@@ -1,16 +1,16 @@
-import * as debug from 'debug';
-import * as fs from 'fs';
-import * as _ from 'lodash';
-import * as mkdirp from 'mkdirp';
-import * as pathUtil from 'path';
-import * as YAML from 'js-yaml';
-import * as mm from "minimatch";
-import { Specification, SwaggerConfig } from '../config';
+import debug from 'debug';
+import fs from 'fs';
+import _ from 'lodash';
+import pathUtil from 'path';
+import YAML from 'js-yaml';
+import mm from "minimatch";
+import { Specification, SwaggerConfig } from '../config.js';
 import {
     ArrayType, EnumerateType, Metadata, Method, ObjectType, Parameter,
     Property, ReferenceType, ResponseType, Type
-} from '../metadata/metadataGenerator';
-import { Swagger } from './swagger';
+} from '../metadata/metadataGenerator.js';
+import { Swagger } from './swagger.js';
+import merge from 'merge';
 
 type Definitions = { [definitionsName: string]: Swagger.Schema };
 
@@ -31,7 +31,7 @@ export class SpecGenerator {
             const swaggerDirs = _.castArray(this.config.outputDirectory);
             this.debugger('Saving specs to files: %j', swaggerDirs);
             return Promise.all(swaggerDirs.map(swaggerDir => {
-                mkdirp(swaggerDir).then(() => {
+                fs.promises.mkdir(swaggerDir, { recursive: true }).then(() => {
                     fs.writeFile(`${swaggerDir}/swagger.json`, JSON.stringify(spec, null, '\t'), (err: any) => {
                         if (err) {
                             reject(err);
@@ -75,7 +75,7 @@ export class SpecGenerator {
         if (this.config.host) { spec.host = this.config.host; }
 
         if (this.config.spec) {
-            spec = require('merge').recursive(spec, this.config.spec);
+            spec = merge.recursive(spec, this.config.spec);
         }
 
         this.debugger('Generated specs: %j', spec);
@@ -88,11 +88,12 @@ export class SpecGenerator {
 
     private async convertToOpenApiSpec(spec: Swagger.Spec) {
         this.debugger('Converting specs to openapi 3.0');
-        const converter = require('swagger2openapi');
         const options = {
             patch: true,
             warnOnly: true
         };
+        // @ts-ignore
+        const converter = await import('swagger2openapi');
         const openapi = await converter.convertObj(spec, options);
         this.debugger('Converted to openapi 3.0: %j', openapi);
         return openapi.openapi;

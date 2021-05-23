@@ -1,12 +1,12 @@
-import * as pathUtil from 'path';
-import * as ts from 'typescript';
-import { getDecorators } from '../utils/decoratorUtils';
-import { getJSDocDescription, getJSDocTag, isExistJSDocTag } from '../utils/jsDocUtils';
-import { normalizePath } from '../utils/pathUtils';
-import { EndpointGenerator } from './endpointGenerator';
-import { Method, ResponseData, ResponseType, Type } from './metadataGenerator';
-import { ParameterGenerator } from './parameterGenerator';
-import { resolveType } from './resolveType';
+import pathUtil from 'path';
+import ts from 'typescript';
+import { getDecorators } from '../utils/decoratorUtils.js';
+import { getJSDocDescription, getJSDocTag, isExistJSDocTag } from '../utils/jsDocUtils.js';
+import { normalizePath } from '../utils/pathUtils.js';
+import { EndpointGenerator } from './endpointGenerator.js';
+import { Method, ResponseData, ResponseType, Type } from './metadataGenerator.js';
+import { ParameterGenerator } from './parameterGenerator.js';
+import { resolveType } from './resolveType.js';
 
 export class MethodGenerator extends EndpointGenerator<ts.MethodDeclaration> {
     private method: string;

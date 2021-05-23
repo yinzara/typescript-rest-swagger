@@ -19,7 +19,7 @@
  * ```
  * A Default response is created in swagger documentation from the method return analisys. So any response declared
  * through this decorator is an additional response created.
- * @param status The response status code
+ * @param name The response status code or name
  * @param description A description for this response
  * @param example An optional example of response to be added to method documentation.
  */
@@ -116,7 +116,7 @@ export function IsDouble(target: any, propertyKey: string, parameterIndex?: numb
   return;
 }
 
-const EnumSymbol = Symbol.for("typescript-rest-swagger-enum")
+const EnumSymbol = Symbol.for("typescript-rest-swagger-enum");
 
 /**
  * Decorator to provide enum values for a string field dynamically
@@ -129,10 +129,10 @@ const EnumSymbol = Symbol.for("typescript-rest-swagger-enum")
  */
 export function Enum(...values: Array<string>): any {
     return (target: any) => {
-        Reflect.set(target, EnumSymbol, values)
+        Reflect.set(target, EnumSymbol, values);
     };
 }
 
 export function getEnumValues(target: any): Array<string> | undefined {
-    return Reflect.get(target, EnumSymbol)
+    return Reflect.get(target, EnumSymbol);
 }

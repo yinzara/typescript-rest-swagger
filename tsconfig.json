@@ -4,10 +4,10 @@
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "lib": [
-            "es6",
+            "ES2020",
             "dom"
         ],
-        "module": "commonjs",
+        "module": "ES2020",
         "newLine": "LF",
         "noFallthroughCasesInSwitch": true,
         "noImplicitAny": true,
@@ -18,7 +18,12 @@
         "outDir": "dist",
         "sourceMap": true,
         "strictNullChecks": false,
-        "target": "es5"
+        "target": "ES2020",
+        "esModuleInterop": true,
+        "moduleResolution": "Node",
+        "resolveJsonModule": true,
+        "baseUrl": "./src",
+        "rootDirs": ["./src"]
     },
     "include": [
         "src/**/*.ts"
