@@ -62,22 +62,22 @@ function resolveType(typeNode, genericTypeMap) {
     if (typeName === 'Date') {
         return getDateType(typeNode);
     }
-    if (typeName === 'Buffer') {
+    else if (typeName === 'Buffer') {
         return { typeName: 'buffer' };
     }
-    if (typeName === 'DownloadBinaryData') {
+    else if (typeName === 'DownloadBinaryData') {
         return { typeName: 'buffer' };
     }
-    if (typeName === 'DownloadResource') {
+    else if (typeName === 'DownloadResource') {
         return { typeName: 'buffer' };
     }
-    if (typeName === 'string') {
+    else if (typeName === 'string') {
         return { typeName: 'string' };
     }
-    if (typeName === 'number') {
+    else if (typeName === 'number') {
         return { typeName: 'number' };
     }
-    if (typeName === 'Partial') {
+    else if (typeName === 'Partial') {
         isPartial = true;
         var subtype = typeReference.typeArguments[0];
         var resolved = resolveType(subtype, genericTypeMap);
@@ -364,7 +364,7 @@ function getReferenceType(type, genericTypeMap, genericTypes) {
         return referenceType;
     }
     catch (err) {
-        console.error("There was a problem resolving type of '" + getTypeName(typeName, genericTypes) + "'.");
+        console.error("There was a problem resolving type of '" + getTypeName(typeName, genericTypes) + "' in file '" + getSourceFilename(type) + "'.");
         throw err;
     }
 }
@@ -414,6 +414,17 @@ function getTypeName(typeName, genericTypes) {
         return typeName;
     }
     return typeName + genericTypes.map(function (t) { return getAnyTypeName(t); }).join('');
+}
+function getSourceFilename(typeNode) {
+    if (typeNode.kind === ts.SyntaxKind.SourceFile) {
+        return typeNode.fileName;
+    }
+    else if (typeNode.parent) {
+        return getSourceFilename(typeNode.parent);
+    }
+    else {
+        return "Unknown";
+    }
 }
 function getAnyTypeName(typeNode) {
     var primitiveType = syntaxKindMap[typeNode.kind];

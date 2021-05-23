@@ -81,11 +81,8 @@ var SpecGenerator = /** @class */ (function () {
                     case 2: return [2 /*return*/, new Promise(function (resolve, reject) {
                             var swaggerDirs = _.castArray(_this.config.outputDirectory);
                             _this.debugger('Saving specs to files: %j', swaggerDirs);
-                            swaggerDirs.forEach(function (swaggerDir) {
-                                mkdirp(swaggerDir, function (dirErr) {
-                                    if (dirErr) {
-                                        throw dirErr;
-                                    }
+                            return Promise.all(swaggerDirs.map(function (swaggerDir) {
+                                mkdirp(swaggerDir).then(function () {
                                     fs.writeFile(swaggerDir + "/swagger.json", JSON.stringify(spec, null, '\t'), function (err) {
                                         if (err) {
                                             reject(err);
@@ -103,7 +100,7 @@ var SpecGenerator = /** @class */ (function () {
                                         }
                                     });
                                 });
-                            });
+                            }));
                         })];
                 }
             });
