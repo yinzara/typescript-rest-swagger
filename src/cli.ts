@@ -51,26 +51,6 @@ parser.addArgument(
     }
 );
 
-const parameters = parser.parseArgs();
-const config = getConfig(parameters.config);
-const compilerOptions = getCompilerOptions(parameters.tsconfig, parameters.tsconfig_path);
-debugLog('Starting Swagger generation tool');
-debugLog('Compiler Options: %j', compilerOptions);
-
-const swaggerConfig = validateSwaggerConfig(config.swagger);
-debugLog('Swagger Config: %j', swaggerConfig);
-
-debugLog('Processing Services Metadata');
-const metadata = new MetadataGenerator(swaggerConfig.entryFile, compilerOptions, swaggerConfig.ignore).generate();
-debugLog('Generated Metadata: %j', metadata);
-
-new SpecGenerator(metadata, swaggerConfig).generate()
-    .then(() => {
-        console.info('Generation completed.');
-    })
-    .catch((err: any) => {
-        console.error('Error generating swagger', err);
-    });
 
 function getPackageJsonValue(key: string): string {
     try {
@@ -81,15 +61,15 @@ function getPackageJsonValue(key: string): string {
     }
 }
 
-function getConfig(configPath = 'swagger.json'): Config {
+async function getConfig(configPath = 'swagger.json'): Promise<Config> {
     const configFile = `${workingDir}/${configPath}`;
     if (_.endsWith(configFile, '.yml') || _.endsWith(configFile, '.yaml')) {
         return YAML.load(configFile);
-    } else if (_.endsWith(configFile, '.js')) {
-        return require(path.join(configFile));
+    } else if (_.endsWith(configFile, '.js') || _.endsWith(configFile, '.mjs') || _.endsWith(configFile, '.cjs')) {
+        return import(path.join(configFile));
     }
     else {
-        return fs.readJSONSync(configFile);
+        return fs.readJSON(configFile);
     }
 }
 
@@ -144,3 +124,25 @@ function getAbsolutePath(pth: string, basePath: string): string {
         return join(basePath, pth);
     }
 }
+
+// actually run SpecGenerator
+(async () => {
+    const parameters = parser.parseArgs();
+    const compilerOptions = getCompilerOptions(parameters.tsconfig, parameters.tsconfig_path);
+    debugLog('Starting Swagger generation tool');
+    debugLog('Compiler Options: %j', compilerOptions);
+
+    const config = await getConfig(parameters.config);
+    const swaggerConfig = validateSwaggerConfig(config.swagger);
+    debugLog('Swagger Config: %j', swaggerConfig);
+
+    debugLog('Processing Services Metadata');
+    const metadata = new MetadataGenerator(swaggerConfig.entryFile, compilerOptions, swaggerConfig.ignore).generate();
+    debugLog('Generated Metadata: %j', metadata);
+
+    return new SpecGenerator(metadata, swaggerConfig).generate();
+})().then(() => {
+    console.info('Generation completed.');
+}).catch((err: any) => {
+    console.error('Error generating swagger', err);
+});

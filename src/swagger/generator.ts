@@ -30,11 +30,8 @@ export class SpecGenerator {
         return new Promise<void>((resolve, reject) => {
             const swaggerDirs = _.castArray(this.config.outputDirectory);
             this.debugger('Saving specs to files: %j', swaggerDirs);
-            swaggerDirs.forEach(swaggerDir => {
-                mkdirp(swaggerDir, (dirErr: any) => {
-                    if (dirErr) {
-                        throw dirErr;
-                    }
+            return Promise.all(swaggerDirs.map(swaggerDir => {
+                mkdirp(swaggerDir).then(() => {
                     fs.writeFile(`${swaggerDir}/swagger.json`, JSON.stringify(spec, null, '\t'), (err: any) => {
                         if (err) {
                             reject(err);
@@ -51,7 +48,7 @@ export class SpecGenerator {
                         }
                     });
                 });
-            });
+            }));
         });
     }
 

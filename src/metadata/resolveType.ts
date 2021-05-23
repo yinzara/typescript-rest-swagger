@@ -66,12 +66,12 @@ export function resolveType(typeNode?: ts.TypeNode, genericTypeMap?: Map<String,
     let typeName = resolveSimpleTypeName(typeReference.typeName as ts.EntityName);
 
     if (typeName === 'Date') { return getDateType(typeNode); }
-    if (typeName === 'Buffer') { return { typeName: 'buffer' }; }
-    if (typeName === 'DownloadBinaryData') { return { typeName: 'buffer' }; }
-    if (typeName === 'DownloadResource') { return { typeName: 'buffer' }; }
-    if (typeName === 'string') { return { typeName: 'string' }; }
-    if (typeName === 'number') { return { typeName: 'number' }; }
-    if (typeName === 'Partial') {
+    else if (typeName === 'Buffer') { return { typeName: 'buffer' }; }
+    else if (typeName === 'DownloadBinaryData') { return { typeName: 'buffer' }; }
+    else if (typeName === 'DownloadResource') { return { typeName: 'buffer' }; }
+    else if (typeName === 'string') { return { typeName: 'string' }; }
+    else if (typeName === 'number') { return { typeName: 'number' }; }
+    else if (typeName === 'Partial') {
         isPartial = true;
         const subtype = typeReference.typeArguments[0];
         const resolved = resolveType(subtype, genericTypeMap);
