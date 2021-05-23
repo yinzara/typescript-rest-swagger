@@ -22,7 +22,6 @@
     "lint:fix": "tslint --fix ./src/**/*.ts ./test/**/*.ts -t verbose",
     "swagger-gen": "node ./dist/cli.js -c ./test/data/swagger.js",
     "pretest": "cross-env NODE_ENV=test npm run build && npm run lint",
-    "prepare": "npm run build",
     "test": "cross-env NODE_ENV=test jest --config ./test/jest.config.js",
     "test:coverage": "cross-env NODE_ENV=test jest --config ./test/jest.config.js --coverage --coverageReporters=text-lcov",
     "tsc": "tsc"
