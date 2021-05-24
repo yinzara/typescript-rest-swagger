@@ -1,4 +1,6 @@
 'use strict';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getEnumValues = exports.Enum = exports.IsDouble = exports.IsFloat = exports.IsLong = exports.IsInt = exports.Hidden = exports.Produces = exports.Consumes = exports.Tags = exports.Example = exports.Response = void 0;
 /**
  * A decorator to document the responses that a given service method can return. It is used to generate
  * documentation for the REST service.
@@ -22,9 +24,10 @@
  * @param description A description for this response
  * @param example An optional example of response to be added to method documentation.
  */
-export function Response(name, description, example) {
+function Response(name, description, example) {
     return () => { return; };
 }
+exports.Response = Response;
 /**
  * Used to provide an example of method return to be added into the method response section of the
  * generated documentation for this method.
@@ -42,9 +45,10 @@ export function Response(name, description, example) {
  * ```
  * @param example The example returned object
  */
-export function Example(example) {
+function Example(example) {
     return () => { return; };
 }
+exports.Example = Example;
 /**
  * Add tags for a given method on generated swagger documentation.
  * ```typescript
@@ -59,52 +63,60 @@ export function Example(example) {
  * ```
  * @param values a list of tags
  */
-export function Tags(...values) {
+function Tags(...values) {
     return () => { return; };
 }
+exports.Tags = Tags;
 /**
  * Document the method or class comsumes property in generated swagger docs
  */
-export function Consumes(...values) {
+function Consumes(...values) {
     return () => { return; };
 }
+exports.Consumes = Consumes;
 /**
  * Document the method or class produces property in generated swagger docs
  */
-export function Produces(...values) {
+function Produces(...values) {
     return () => { return; };
 }
+exports.Produces = Produces;
 /**
  * Document the method or class produces property in generated swagger docs
  */
-export function Hidden() {
+function Hidden() {
     return () => { return; };
 }
+exports.Hidden = Hidden;
 /**
  * Document the type of a property or parameter as `integer ($int32)` in generated swagger docs
  */
-export function IsInt(target, propertyKey, parameterIndex) {
+function IsInt(target, propertyKey, parameterIndex) {
     return;
 }
+exports.IsInt = IsInt;
 /**
  * Document the type of a property or parameter as `integer ($int64)` in generated swagger docs
  */
-export function IsLong(target, propertyKey, parameterIndex) {
+function IsLong(target, propertyKey, parameterIndex) {
     return;
 }
+exports.IsLong = IsLong;
 /**
  * Document the type of a property or parameter as `number ($float)` in generated swagger docs
  */
-export function IsFloat(target, propertyKey, parameterIndex) {
+function IsFloat(target, propertyKey, parameterIndex) {
     return;
 }
+exports.IsFloat = IsFloat;
 /**
  * Document the type of a property or parameter as `number ($double)` in generated swagger docs.
  * This is the default for `number` types without a specifying decorator.
  */
-export function IsDouble(target, propertyKey, parameterIndex) {
+function IsDouble(target, propertyKey, parameterIndex) {
     return;
 }
+exports.IsDouble = IsDouble;
 const EnumSymbol = Symbol.for("typescript-rest-swagger-enum");
 /**
  * Decorator to provide enum values for a string field dynamically
@@ -115,12 +127,14 @@ const EnumSymbol = Symbol.for("typescript-rest-swagger-enum");
  * const { getEnumValues } = require("./another-module")
  * @Enum(...getEnumValues())
  */
-export function Enum(...values) {
+function Enum(...values) {
     return (target) => {
         Reflect.set(target, EnumSymbol, values);
     };
 }
-export function getEnumValues(target) {
+exports.Enum = Enum;
+function getEnumValues(target) {
     return Reflect.get(target, EnumSymbol);
 }
+exports.getEnumValues = getEnumValues;
 //# sourceMappingURL=decorators.js.map

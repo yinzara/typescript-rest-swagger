@@ -1,36 +1,61 @@
-import debug from 'debug';
-import fs from 'fs';
-import _ from 'lodash';
-import pathUtil from 'path';
-import YAML from 'js-yaml';
-import mm from "minimatch";
-import { Specification } from '../config.js';
-import merge from 'merge';
-export class SpecGenerator {
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SpecGenerator = void 0;
+const debug_1 = __importDefault(require("debug"));
+const fs_1 = __importDefault(require("fs"));
+const lodash_1 = __importDefault(require("lodash"));
+const path_1 = __importDefault(require("path"));
+const js_yaml_1 = __importDefault(require("js-yaml"));
+const minimatch_1 = __importDefault(require("minimatch"));
+const config_js_1 = require("../config.js");
+const merge_1 = __importDefault(require("merge"));
+class SpecGenerator {
     constructor(metadata, config) {
         this.metadata = metadata;
         this.config = config;
-        this.debugger = debug('typescript-rest-swagger:spec-generator');
+        this.debugger = debug_1.default('typescript-rest-swagger:spec-generator');
     }
     async generate() {
         this.debugger('Generating swagger files.');
         this.debugger('Swagger Config: %j', this.config);
         this.debugger('Services Metadata: %j', this.metadata);
         let spec = this.getSwaggerSpec();
-        if (this.config.outputFormat === Specification.OpenApi_3) {
+        if (this.config.outputFormat === config_js_1.Specification.OpenApi_3) {
             spec = await this.convertToOpenApiSpec(spec);
         }
         return new Promise((resolve, reject) => {
-            const swaggerDirs = _.castArray(this.config.outputDirectory);
+            const swaggerDirs = lodash_1.default.castArray(this.config.outputDirectory);
             this.debugger('Saving specs to files: %j', swaggerDirs);
             return Promise.all(swaggerDirs.map(swaggerDir => {
-                fs.promises.mkdir(swaggerDir, { recursive: true }).then(() => {
-                    fs.writeFile(`${swaggerDir}/swagger.json`, JSON.stringify(spec, null, '\t'), (err) => {
+                fs_1.default.promises.mkdir(swaggerDir, { recursive: true }).then(() => {
+                    fs_1.default.writeFile(`${swaggerDir}/swagger.json`, JSON.stringify(spec, null, '\t'), (err) => {
                         if (err) {
                             reject(err);
                         }
                         if (this.config.yaml) {
-                            fs.writeFile(`${swaggerDir}/swagger.yaml`, YAML.dump(spec, { flowLevel: -1 }), (errYaml) => {
+                            fs_1.default.writeFile(`${swaggerDir}/swagger.yaml`, js_yaml_1.default.dump(spec, { flowLevel: -1 }), (errYaml) => {
                                 if (errYaml) {
                                     reject(errYaml);
                                 }
@@ -79,7 +104,7 @@ export class SpecGenerator {
             spec.host = this.config.host;
         }
         if (this.config.spec) {
-            spec = merge.recursive(spec, this.config.spec);
+            spec = merge_1.default.recursive(spec, this.config.spec);
         }
         this.debugger('Generated specs: %j', spec);
         return spec;
@@ -94,7 +119,7 @@ export class SpecGenerator {
             warnOnly: true
         };
         // @ts-ignore
-        const converter = await import('swagger2openapi');
+        const converter = await Promise.resolve().then(() => __importStar(require('swagger2openapi')));
         const openapi = await converter.convertObj(spec, options);
         this.debugger('Converted to openapi 3.0: %j', openapi);
         return openapi.openapi;
@@ -104,8 +129,8 @@ export class SpecGenerator {
         const ignoreTypes = this.config.ignoreTypes || [];
         const includeTypes = this.config.includeTypes;
         Object.keys(this.metadata.referenceTypes)
-            .filter(typeName => includeTypes === undefined || includeTypes.some(type => mm(typeName, type)))
-            .filter(typeName => !ignoreTypes.some(type => mm(typeName, type)))
+            .filter(typeName => includeTypes === undefined || includeTypes.some(type => minimatch_1.default(typeName, type)))
+            .filter(typeName => !ignoreTypes.some(type => minimatch_1.default(typeName, type)))
             .map(typeName => {
             this.debugger('Generating definition for type: %s', typeName);
             const referenceType = this.metadata.referenceTypes[typeName];
@@ -152,13 +177,13 @@ export class SpecGenerator {
             this.debugger('Generating paths for controller: %s', controller.name);
             controller.methods.forEach(method => {
                 this.debugger('Generating paths for method: %s', method.name);
-                const path = pathUtil.posix.join('/', (controller.path ? controller.path : ''), method.path);
+                const path = path_1.default.posix.join('/', (controller.path ? controller.path : ''), method.path);
                 paths[path] = paths[path] || {};
-                method.consumes = _.union(controller.consumes, method.consumes);
-                method.produces = _.union(controller.produces, method.produces);
-                method.tags = _.union(controller.tags, method.tags);
+                method.consumes = lodash_1.default.union(controller.consumes, method.consumes);
+                method.produces = lodash_1.default.union(controller.produces, method.produces);
+                method.tags = lodash_1.default.union(controller.tags, method.tags);
                 method.security = method.security || controller.security;
-                method.responses = _.union(controller.responses, method.responses);
+                method.responses = lodash_1.default.union(controller.responses, method.responses);
                 const pathObject = paths[path];
                 pathObject[method.method] = this.buildPathMethod(controller.name, definitions, method);
                 this.debugger('Generated path for method %s: %j', method.name, pathObject[method.method]);
@@ -283,7 +308,7 @@ export class SpecGenerator {
         const swaggerProperties = {};
         const ignoreProperties = this.config.ignoreProperties || [];
         properties
-            .filter(property => !ignoreProperties.some(prop => mm(property.name, prop)))
+            .filter(property => !ignoreProperties.some(prop => minimatch_1.default(property.name, prop)))
             .forEach(property => {
             let swaggerType = this.getSwaggerType(property.type);
             if (!swaggerType.$ref) {
@@ -303,7 +328,7 @@ export class SpecGenerator {
         const swaggerAdditionalProperties = {};
         const ignoreProperties = this.config.ignoreProperties || [];
         properties
-            .filter(property => !ignoreProperties.some(prop => mm(property.name, prop)))
+            .filter(property => !ignoreProperties.some(prop => minimatch_1.default(property.name, prop)))
             .forEach(property => {
             const swaggerType = this.getSwaggerType(property.type);
             if (swaggerType.$ref) {
@@ -430,4 +455,5 @@ export class SpecGenerator {
         return { $ref: `#/definitions/${referenceType.typeName}` };
     }
 }
+exports.SpecGenerator = SpecGenerator;
 //# sourceMappingURL=generator.js.map

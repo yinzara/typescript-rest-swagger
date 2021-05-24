@@ -1,28 +1,48 @@
 #!/usr/bin/env node
 'use strict';
-import { ArgumentParser } from 'argparse';
-import debug from 'debug';
-import fs from 'fs-extra-promise';
-import _ from 'lodash';
-import { isAbsolute, join } from 'path';
-import ts from 'typescript';
-import YAML from 'js-yaml';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { Specification } from './config.js';
-import { MetadataGenerator } from './metadata/metadataGenerator.js';
-import { SpecGenerator } from './swagger/generator.js';
-import { readPackageSync } from "read-pkg";
-import Module from "module";
-const require = Module.createRequire(import.meta.url);
-const debugLog = debug('typescript-rest-swagger');
-const packageJson = readPackageSync({ cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..") });
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const argparse_1 = require("argparse");
+const debug_1 = __importDefault(require("debug"));
+const fs_extra_promise_1 = __importDefault(require("fs-extra-promise"));
+const lodash_1 = __importDefault(require("lodash"));
+const path_1 = require("path");
+const typescript_1 = __importDefault(require("typescript"));
+const js_yaml_1 = __importDefault(require("js-yaml"));
+const path_2 = __importDefault(require("path"));
+const config_js_1 = require("./config.js");
+const metadataGenerator_js_1 = require("./metadata/metadataGenerator.js");
+const generator_js_1 = require("./swagger/generator.js");
+const read_pkg_1 = require("read-pkg");
+const debugLog = debug_1.default('typescript-rest-swagger');
+const packageJson = read_pkg_1.readPackageSync({ cwd: path_2.default.resolve(__dirname, "..") });
 const workingDir = process.cwd();
 const versionDefault = getPackageJsonValue('version');
 const nameDefault = getPackageJsonValue('name');
 const descriptionDefault = getPackageJsonValue('description');
 const licenseDefault = getPackageJsonValue('license');
-const parser = new ArgumentParser({
+const parser = new argparse_1.ArgumentParser({
     addHelp: true,
     description: 'Typescript-REST Swagger tool',
     version: packageJson.version
@@ -40,7 +60,7 @@ parser.addArgument(['-p', '--tsconfig_path'], {
 });
 function getPackageJsonValue(key) {
     try {
-        const projectPackageJson = readPackageSync();
+        const projectPackageJson = read_pkg_1.readPackageSync();
         return projectPackageJson[key] || '';
     }
     catch (err) {
@@ -49,14 +69,14 @@ function getPackageJsonValue(key) {
 }
 async function getConfig(configPath = 'swagger.json') {
     const configFile = `${workingDir}/${configPath}`;
-    if (_.endsWith(configFile, '.yml') || _.endsWith(configFile, '.yaml')) {
-        return YAML.load(configFile);
+    if (lodash_1.default.endsWith(configFile, '.yml') || lodash_1.default.endsWith(configFile, '.yaml')) {
+        return js_yaml_1.default.load(configFile);
     }
-    else if (_.endsWith(configFile, '.js') || _.endsWith(configFile, '.mjs') || _.endsWith(configFile, '.cjs')) {
-        return import(path.join(configFile));
+    else if (lodash_1.default.endsWith(configFile, '.js') || lodash_1.default.endsWith(configFile, '.mjs') || lodash_1.default.endsWith(configFile, '.cjs')) {
+        return Promise.resolve().then(() => __importStar(require(path_2.default.join(configFile))));
     }
     else {
-        return fs.readJSON(configFile);
+        return fs_extra_promise_1.default.readJSON(configFile);
     }
 }
 function validateSwaggerConfig(conf) {
@@ -71,7 +91,7 @@ function validateSwaggerConfig(conf) {
     conf.description = conf.description || descriptionDefault;
     conf.license = conf.license || licenseDefault;
     conf.yaml = conf.yaml === false ? false : true;
-    conf.outputFormat = conf.outputFormat ? Specification[conf.outputFormat] : Specification.Swagger_2;
+    conf.outputFormat = conf.outputFormat ? config_js_1.Specification[conf.outputFormat] : config_js_1.Specification.Swagger_2;
     return conf;
 }
 async function getCompilerOptions(loadTsconfig, tsconfigPath) {
@@ -82,7 +102,7 @@ async function getCompilerOptions(loadTsconfig, tsconfigPath) {
         return {};
     }
     const cwd = process.cwd();
-    const defaultTsconfigPath = join(cwd, 'tsconfig.json');
+    const defaultTsconfigPath = path_1.join(cwd, 'tsconfig.json');
     tsconfigPath = tsconfigPath
         ? getAbsolutePath(tsconfigPath, cwd)
         : defaultTsconfigPath;
@@ -92,7 +112,7 @@ async function getCompilerOptions(loadTsconfig, tsconfigPath) {
             throw new Error('Invalid tsconfig');
         }
         return tsConfig.compilerOptions
-            ? ts.convertCompilerOptionsFromJson(tsConfig.compilerOptions, cwd).options
+            ? typescript_1.default.convertCompilerOptionsFromJson(tsConfig.compilerOptions, cwd).options
             : {};
     }
     catch (err) {
@@ -108,11 +128,11 @@ async function getCompilerOptions(loadTsconfig, tsconfigPath) {
     }
 }
 function getAbsolutePath(pth, basePath) {
-    if (isAbsolute(pth)) {
+    if (path_1.isAbsolute(pth)) {
         return pth;
     }
     else {
-        return join(basePath, pth);
+        return path_1.join(basePath, pth);
     }
 }
 // actually run SpecGenerator
@@ -125,9 +145,9 @@ function getAbsolutePath(pth, basePath) {
     const swaggerConfig = validateSwaggerConfig(config.swagger);
     debugLog('Swagger Config: %j', swaggerConfig);
     debugLog('Processing Services Metadata');
-    const metadata = new MetadataGenerator(swaggerConfig.entryFile, compilerOptions, swaggerConfig.ignore).generate();
+    const metadata = new metadataGenerator_js_1.MetadataGenerator(swaggerConfig.entryFile, compilerOptions, swaggerConfig.ignore).generate();
     debugLog('Generated Metadata: %j', metadata);
-    return new SpecGenerator(metadata, swaggerConfig).generate();
+    return new generator_js_1.SpecGenerator(metadata, swaggerConfig).generate();
 })().then(() => {
     console.info('Generation completed.');
 }).catch((err) => {

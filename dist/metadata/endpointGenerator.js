@@ -1,16 +1,21 @@
 'use strict';
-import debug from 'debug';
-import _ from 'lodash';
-import ts from 'typescript';
-import { getDecorators } from '../utils/decoratorUtils.js';
-import { resolveType } from './resolveType.js';
-export class EndpointGenerator {
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.EndpointGenerator = void 0;
+const debug_1 = __importDefault(require("debug"));
+const lodash_1 = __importDefault(require("lodash"));
+const typescript_1 = __importDefault(require("typescript"));
+const decoratorUtils_js_1 = require("../utils/decoratorUtils.js");
+const resolveType_js_1 = require("./resolveType.js");
+class EndpointGenerator {
     constructor(node, name) {
         this.node = node;
-        this.debugger = debug(`typescript-rest-swagger:metadata:${name}`);
+        this.debugger = debug_1.default(`typescript-rest-swagger:metadata:${name}`);
     }
     getDecoratorValues(decoratorName, acceptMultiple = false) {
-        const decorators = getDecorators(this.node, decorator => decorator.text === decoratorName);
+        const decorators = decoratorUtils_js_1.getDecorators(this.node, decorator => decorator.text === decoratorName);
         if (!decorators || !decorators.length) {
             return [];
         }
@@ -35,11 +40,11 @@ export class EndpointGenerator {
         }
         return securities.map(security => ({
             name: security[1] ? security[1] : 'default',
-            scopes: security[0] ? _.castArray(this.handleRolesArray(security[0])) : []
+            scopes: security[0] ? lodash_1.default.castArray(this.handleRolesArray(security[0])) : []
         }));
     }
     handleRolesArray(argument) {
-        if (ts.isArrayLiteralExpression(argument)) {
+        if (typescript_1.default.isArrayLiteralExpression(argument)) {
             return argument.elements.map(value => value.getText())
                 .map(val => (val && val.startsWith('\'') && val.endsWith('\'')) ? val.slice(1, -1) : val);
         }
@@ -63,18 +68,18 @@ export class EndpointGenerator {
     }
     getInitializerValue(initializer) {
         switch (initializer.kind) {
-            case ts.SyntaxKind.ArrayLiteralExpression:
+            case typescript_1.default.SyntaxKind.ArrayLiteralExpression:
                 return initializer.elements.map((e) => this.getInitializerValue(e));
-            case ts.SyntaxKind.StringLiteral:
+            case typescript_1.default.SyntaxKind.StringLiteral:
                 return initializer.text;
-            case ts.SyntaxKind.TrueKeyword:
+            case typescript_1.default.SyntaxKind.TrueKeyword:
                 return true;
-            case ts.SyntaxKind.FalseKeyword:
+            case typescript_1.default.SyntaxKind.FalseKeyword:
                 return false;
-            case ts.SyntaxKind.NumberKeyword:
-            case ts.SyntaxKind.FirstLiteralToken:
+            case typescript_1.default.SyntaxKind.NumberKeyword:
+            case typescript_1.default.SyntaxKind.FirstLiteralToken:
                 return parseInt(initializer.text, 10);
-            case ts.SyntaxKind.ObjectLiteralExpression:
+            case typescript_1.default.SyntaxKind.ObjectLiteralExpression:
                 const nestedObject = {};
                 initializer.properties.forEach((p) => {
                     nestedObject[p.name.text] = this.getInitializerValue(p.initializer);
@@ -85,7 +90,7 @@ export class EndpointGenerator {
         }
     }
     getResponses(genericTypeMap) {
-        const decorators = getDecorators(this.node, decorator => decorator.text === 'Response');
+        const decorators = decoratorUtils_js_1.getDecorators(this.node, decorator => decorator.text === 'Response');
         if (!decorators || !decorators.length) {
             return [];
         }
@@ -108,7 +113,7 @@ export class EndpointGenerator {
                 description: description,
                 examples: examples,
                 schema: (decorator.typeArguments && decorator.typeArguments.length > 0)
-                    ? resolveType(decorator.typeArguments[0], genericTypeMap)
+                    ? resolveType_js_1.resolveType(decorator.typeArguments[0], genericTypeMap)
                     : undefined,
                 status: status
             };
@@ -117,4 +122,5 @@ export class EndpointGenerator {
         });
     }
 }
+exports.EndpointGenerator = EndpointGenerator;
 //# sourceMappingURL=endpointGenerator.js.map

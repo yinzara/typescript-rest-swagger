@@ -9,19 +9,13 @@ import { isAbsolute, join } from 'path';
 import ts from 'typescript';
 import YAML from 'js-yaml';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { Config, Specification, SwaggerConfig } from './config.js';
 import { MetadataGenerator } from './metadata/metadataGenerator.js';
 import { SpecGenerator } from './swagger/generator.js';
 import { readPackageSync } from "read-pkg";
-import Module from "module";
-
-const require = Module.createRequire(import.meta.url);
 
 const debugLog = debug('typescript-rest-swagger');
-
-
-const packageJson = readPackageSync({cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..") });
+const packageJson = readPackageSync({cwd: path.resolve(__dirname, "..") });
 
 const workingDir: string = process.cwd();
 const versionDefault = getPackageJsonValue('version');

@@ -1,5 +1,11 @@
-import ts from 'typescript';
-export function getDecorators(node, isMatching) {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.isDecorator = exports.getDecoratorArguments = exports.getDecoratorOptions = exports.getDecoratorTextValue = exports.getDecoratorName = exports.getDecorators = void 0;
+const typescript_1 = __importDefault(require("typescript"));
+function getDecorators(node, isMatching) {
     const decorators = node.decorators;
     if (!decorators || !decorators.length) {
         return [];
@@ -11,13 +17,13 @@ export function getDecorators(node, isMatching) {
             typeArguments: []
         };
         let x = d.expression;
-        if (ts.isCallExpression(x)) {
+        if (typescript_1.default.isCallExpression(x)) {
             if (x.arguments) {
                 result.arguments = x.arguments.map((argument) => {
-                    if (ts.isStringLiteral(argument)) {
+                    if (typescript_1.default.isStringLiteral(argument)) {
                         return argument.text;
                     }
-                    else if (ts.isNumericLiteral(argument)) {
+                    else if (typescript_1.default.isNumericLiteral(argument)) {
                         return argument.text;
                     }
                     else {
@@ -35,6 +41,7 @@ export function getDecorators(node, isMatching) {
     })
         .filter(isMatching);
 }
+exports.getDecorators = getDecorators;
 function getDecorator(node, isMatching) {
     const decorators = getDecorators(node, isMatching);
     if (!decorators || !decorators.length) {
@@ -42,27 +49,32 @@ function getDecorator(node, isMatching) {
     }
     return decorators[0];
 }
-export function getDecoratorName(node, isMatching) {
+function getDecoratorName(node, isMatching) {
     const decorator = getDecorator(node, isMatching);
     return decorator ? decorator.text : undefined;
 }
-export function getDecoratorTextValue(node, isMatching) {
+exports.getDecoratorName = getDecoratorName;
+function getDecoratorTextValue(node, isMatching) {
     const decorator = getDecorator(node, isMatching);
     return decorator && typeof decorator.arguments[0] === 'string' ? decorator.arguments[0] : undefined;
 }
-export function getDecoratorOptions(node, isMatching) {
+exports.getDecoratorTextValue = getDecoratorTextValue;
+function getDecoratorOptions(node, isMatching) {
     const decorator = getDecorator(node, isMatching);
     return decorator && typeof decorator.arguments[1] === 'object' ? decorator.arguments[1] : undefined;
 }
-export function getDecoratorArguments(node, isMatching) {
+exports.getDecoratorOptions = getDecoratorOptions;
+function getDecoratorArguments(node, isMatching) {
     const decorator = getDecorator(node, isMatching);
     return decorator && decorator.arguments.length > 0 ? decorator.arguments : undefined;
 }
-export function isDecorator(node, isMatching) {
+exports.getDecoratorArguments = getDecoratorArguments;
+function isDecorator(node, isMatching) {
     const decorators = getDecorators(node, isMatching);
     if (!decorators || !decorators.length) {
         return false;
     }
     return true;
 }
+exports.isDecorator = isDecorator;
 //# sourceMappingURL=decoratorUtils.js.map
