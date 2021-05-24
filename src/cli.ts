@@ -12,13 +12,38 @@ import path from 'path';
 import { Config, Specification, SwaggerConfig } from './config.js';
 import { MetadataGenerator } from './metadata/metadataGenerator.js';
 import { SpecGenerator } from './swagger/generator.js';
-import type { NormalizeOptions, readPackageAsync as RPA, readPackageSync as RPS} from 'read-pkg';
-
-let readPackageSync: typeof RPS;
-let readPackageAsync: typeof RPA;
+import { readPackageSync, readPackageAsync } from "./read-pkg.js";
 
 const debugLog = debug('typescript-rest-swagger');
 const workingDir: string = process.cwd();
+
+function getPackageJsonValue(key: string): string {
+    try {
+        const projectPackageJson = readPackageSync();
+        return projectPackageJson[key] || '';
+    } catch (err) {
+        return '';
+    }
+}
+const versionDefault = getPackageJsonValue('version');
+const nameDefault = getPackageJsonValue('name');
+const descriptionDefault = getPackageJsonValue('description');
+const licenseDefault = getPackageJsonValue('license');
+
+
+function validateSwaggerConfig(conf: SwaggerConfig): SwaggerConfig {
+    if (!conf.outputDirectory) { throw new Error('Missing outputDirectory: onfiguration most contain output directory'); }
+    if (!conf.entryFile) { throw new Error('Missing entryFile: Configuration must contain an entry point file.'); }
+    conf.version = conf.version || versionDefault;
+    conf.name = conf.name || nameDefault;
+    conf.description = conf.description || descriptionDefault;
+    conf.license = conf.license || licenseDefault;
+    conf.yaml = conf.yaml === false ? false : true;
+    conf.outputFormat = conf.outputFormat ? Specification[conf.outputFormat] : Specification.Swagger_2;
+
+    return conf;
+}
+
 
 async function getConfig(configPath = 'swagger.json'): Promise<Config> {
     const configFile = `${workingDir}/${configPath}`;
@@ -31,16 +56,6 @@ async function getConfig(configPath = 'swagger.json'): Promise<Config> {
         return fs.readJSON(configFile);
     }
 }
-
-function getPackageJsonValue(key: string): string {
-    try {
-        const projectPackageJson = readPackageSync();
-        return projectPackageJson[key] || '';
-    } catch (err) {
-        return '';
-    }
-}
-
 async function getCompilerOptions(loadTsconfig: boolean, tsconfigPath?: string | null): Promise<ts.CompilerOptions> {
     if (!loadTsconfig && tsconfigPath) {
         loadTsconfig = true;
@@ -82,14 +97,6 @@ function getAbsolutePath(pth: string, basePath: string): string {
 
 // actually run SpecGenerator
 (async () => {
-    const readPkg: any = await import('read-pkg');
-    if (typeof readPkg.sync === 'function') {
-        readPackageAsync = (opts: NormalizeOptions) => Promise.resolve(readPkg.sync(opts));
-        readPackageSync = readPkg.sync;
-    } else {
-        readPackageAsync = readPkg.readPackageAsync;
-        readPackageSync = readPkg.readPackageSync;
-    }
     const packageJson = await readPackageAsync({cwd: path.resolve(__dirname, "..") });
     const parser = new ArgumentParser({
         addHelp: true,
@@ -119,25 +126,6 @@ function getAbsolutePath(pth: string, basePath: string): string {
             help: 'The tsconfig file (tsconfig.json) path. Default to {cwd}/tsconfig.json.',
         }
     );
-
-    const versionDefault = getPackageJsonValue('version');
-    const nameDefault = getPackageJsonValue('name');
-    const descriptionDefault = getPackageJsonValue('description');
-    const licenseDefault = getPackageJsonValue('license');
-
-
-    function validateSwaggerConfig(conf: SwaggerConfig): SwaggerConfig {
-        if (!conf.outputDirectory) { throw new Error('Missing outputDirectory: onfiguration most contain output directory'); }
-        if (!conf.entryFile) { throw new Error('Missing entryFile: Configuration must contain an entry point file.'); }
-        conf.version = conf.version || versionDefault;
-        conf.name = conf.name || nameDefault;
-        conf.description = conf.description || descriptionDefault;
-        conf.license = conf.license || licenseDefault;
-        conf.yaml = conf.yaml === false ? false : true;
-        conf.outputFormat = conf.outputFormat ? Specification[conf.outputFormat] : Specification.Swagger_2;
-
-        return conf;
-    }
 
     const parameters = parser.parseArgs();
     const compilerOptions = await getCompilerOptions(parameters.tsconfig, parameters.tsconfig_path);
