@@ -52,7 +52,7 @@
     "minimatch": "^3.0.4",
     "mocha": "^8.4.0",
     "path": "^0.12.7",
-    "read-pkg": "^6.0.0",
+    "read-pkg": "^5.2.0",
     "rimraf": "^3.0.2",
     "source-map-support": "^0.5.19",
     "swagger2openapi": "^7.0.5",

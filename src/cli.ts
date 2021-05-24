@@ -12,10 +12,10 @@ import path from 'path';
 import { Config, Specification, SwaggerConfig } from './config.js';
 import { MetadataGenerator } from './metadata/metadataGenerator.js';
 import { SpecGenerator } from './swagger/generator.js';
-import { readPackageSync } from "read-pkg";
+import readPkg from "read-pkg";
 
 const debugLog = debug('typescript-rest-swagger');
-const packageJson = readPackageSync({cwd: path.resolve(__dirname, "..") });
+const packageJson = readPkg.sync({cwd: path.resolve(__dirname, "..") });
 
 const workingDir: string = process.cwd();
 const versionDefault = getPackageJsonValue('version');
