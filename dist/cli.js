@@ -34,39 +34,10 @@ const path_2 = __importDefault(require("path"));
 const config_js_1 = require("./config.js");
 const metadataGenerator_js_1 = require("./metadata/metadataGenerator.js");
 const generator_js_1 = require("./swagger/generator.js");
-const read_pkg_1 = require("read-pkg");
+let readPackageSync;
+let readPackageAsync;
 const debugLog = debug_1.default('typescript-rest-swagger');
-const packageJson = read_pkg_1.readPackageSync({ cwd: path_2.default.resolve(__dirname, "..") });
 const workingDir = process.cwd();
-const versionDefault = getPackageJsonValue('version');
-const nameDefault = getPackageJsonValue('name');
-const descriptionDefault = getPackageJsonValue('description');
-const licenseDefault = getPackageJsonValue('license');
-const parser = new argparse_1.ArgumentParser({
-    addHelp: true,
-    description: 'Typescript-REST Swagger tool',
-    version: packageJson.version
-});
-parser.addArgument(['-c', '--config'], {
-    help: 'The swagger config file (swagger.json or swagger.yml or swaggerCongig.js).'
-});
-parser.addArgument(['-t', '--tsconfig'], {
-    action: 'storeTrue',
-    defaultValue: false,
-    help: 'Load tsconfig.json file',
-});
-parser.addArgument(['-p', '--tsconfig_path'], {
-    help: 'The tsconfig file (tsconfig.json) path. Default to {cwd}/tsconfig.json.',
-});
-function getPackageJsonValue(key) {
-    try {
-        const projectPackageJson = read_pkg_1.readPackageSync();
-        return projectPackageJson[key] || '';
-    }
-    catch (err) {
-        return '';
-    }
-}
 async function getConfig(configPath = 'swagger.json') {
     const configFile = `${workingDir}/${configPath}`;
     if (lodash_1.default.endsWith(configFile, '.yml') || lodash_1.default.endsWith(configFile, '.yaml')) {
@@ -79,20 +50,14 @@ async function getConfig(configPath = 'swagger.json') {
         return fs_extra_promise_1.default.readJSON(configFile);
     }
 }
-function validateSwaggerConfig(conf) {
-    if (!conf.outputDirectory) {
-        throw new Error('Missing outputDirectory: onfiguration most contain output directory');
+function getPackageJsonValue(key) {
+    try {
+        const projectPackageJson = readPackageSync();
+        return projectPackageJson[key] || '';
     }
-    if (!conf.entryFile) {
-        throw new Error('Missing entryFile: Configuration must contain an entry point file.');
+    catch (err) {
+        return '';
     }
-    conf.version = conf.version || versionDefault;
-    conf.name = conf.name || nameDefault;
-    conf.description = conf.description || descriptionDefault;
-    conf.license = conf.license || licenseDefault;
-    conf.yaml = conf.yaml === false ? false : true;
-    conf.outputFormat = conf.outputFormat ? config_js_1.Specification[conf.outputFormat] : config_js_1.Specification.Swagger_2;
-    return conf;
 }
 async function getCompilerOptions(loadTsconfig, tsconfigPath) {
     if (!loadTsconfig && tsconfigPath) {
@@ -137,6 +102,51 @@ function getAbsolutePath(pth, basePath) {
 }
 // actually run SpecGenerator
 (async () => {
+    const readPkg = await Promise.resolve().then(() => __importStar(require('read-pkg')));
+    if (typeof readPkg.sync === 'function') {
+        readPackageAsync = (opts) => Promise.resolve(readPkg.sync(opts));
+        readPackageSync = readPkg.sync;
+    }
+    else {
+        readPackageAsync = readPkg.readPackageAsync;
+        readPackageSync = readPkg.readPackageSync;
+    }
+    const packageJson = await readPackageAsync({ cwd: path_2.default.resolve(__dirname, "..") });
+    const parser = new argparse_1.ArgumentParser({
+        addHelp: true,
+        description: 'Typescript-REST Swagger tool',
+        version: packageJson.version
+    });
+    parser.addArgument(['-c', '--config'], {
+        help: 'The swagger config file (swagger.json or swagger.yml or swaggerCongig.js).'
+    });
+    parser.addArgument(['-t', '--tsconfig'], {
+        action: 'storeTrue',
+        defaultValue: false,
+        help: 'Load tsconfig.json file',
+    });
+    parser.addArgument(['-p', '--tsconfig_path'], {
+        help: 'The tsconfig file (tsconfig.json) path. Default to {cwd}/tsconfig.json.',
+    });
+    const versionDefault = getPackageJsonValue('version');
+    const nameDefault = getPackageJsonValue('name');
+    const descriptionDefault = getPackageJsonValue('description');
+    const licenseDefault = getPackageJsonValue('license');
+    function validateSwaggerConfig(conf) {
+        if (!conf.outputDirectory) {
+            throw new Error('Missing outputDirectory: onfiguration most contain output directory');
+        }
+        if (!conf.entryFile) {
+            throw new Error('Missing entryFile: Configuration must contain an entry point file.');
+        }
+        conf.version = conf.version || versionDefault;
+        conf.name = conf.name || nameDefault;
+        conf.description = conf.description || descriptionDefault;
+        conf.license = conf.license || licenseDefault;
+        conf.yaml = conf.yaml === false ? false : true;
+        conf.outputFormat = conf.outputFormat ? config_js_1.Specification[conf.outputFormat] : config_js_1.Specification.Swagger_2;
+        return conf;
+    }
     const parameters = parser.parseArgs();
     const compilerOptions = await getCompilerOptions(parameters.tsconfig, parameters.tsconfig_path);
     debugLog('Starting Swagger generation tool');
