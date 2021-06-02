@@ -1,6 +1,6 @@
 import ts from 'typescript';
-import { EndpointGenerator } from './endpointGenerator.js';
-import { Method } from './metadataGenerator.js';
+import { EndpointGenerator } from './endpointGenerator';
+import { Method } from './metadataGenerator';
 export declare class MethodGenerator extends EndpointGenerator<ts.MethodDeclaration> {
     private readonly controllerPath;
     private readonly genericTypeMap?;

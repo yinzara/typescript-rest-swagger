@@ -6,9 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getLiteralValue = exports.getCommonPrimitiveAndArrayUnionType = exports.getSuperClass = exports.resolveType = void 0;
 const lodash_1 = __importDefault(require("lodash"));
 const typescript_1 = __importDefault(require("typescript"));
-const decoratorUtils_js_1 = require("../utils/decoratorUtils.js");
-const jsDocUtils_js_1 = require("../utils/jsDocUtils.js");
-const metadataGenerator_js_1 = require("./metadataGenerator.js");
+const decoratorUtils_1 = require("../utils/decoratorUtils");
+const jsDocUtils_1 = require("../utils/jsDocUtils");
+const metadataGenerator_1 = require("./metadataGenerator");
 let syntaxKindMap;
 const localReferenceTypeCache = {};
 const inProgressTypes = {};
@@ -120,12 +120,12 @@ function resolveType(typeNode, genericTypeMap) {
             referenceType.typeArgument = resolveType(typeT[0], genericTypeMap);
         }
         else {
-            metadataGenerator_js_1.MetadataGenerator.current.addReferenceType(referenceType);
+            metadataGenerator_1.MetadataGenerator.current.addReferenceType(referenceType);
         }
     }
     else {
         referenceType = getReferenceType(typeReference.typeName, genericTypeMap);
-        metadataGenerator_js_1.MetadataGenerator.current.addReferenceType(referenceType);
+        metadataGenerator_1.MetadataGenerator.current.addReferenceType(referenceType);
     }
     if (isPartial && referenceType.properties) {
         referenceType.properties.forEach(p => p.required = false);
@@ -145,10 +145,10 @@ function getPrimitiveType(typeNode) {
         }
         const validDecorators = ['IsInt', 'IsLong', 'IsFloat', 'IsDouble'];
         // Can't use decorators on interface/type properties, so support getting the type from jsdoc too.
-        const jsdocTagName = jsDocUtils_js_1.getFirstMatchingJSDocTagName(parentNode, tag => {
+        const jsdocTagName = jsDocUtils_1.getFirstMatchingJSDocTagName(parentNode, tag => {
             return validDecorators.some(t => t === tag.tagName.text);
         });
-        const decoratorName = decoratorUtils_js_1.getDecoratorName(parentNode, identifier => {
+        const decoratorName = decoratorUtils_1.getDecoratorName(parentNode, identifier => {
             return validDecorators.some(m => m === identifier.text);
         });
         switch (decoratorName || jsdocTagName) {
@@ -165,9 +165,23 @@ function getPrimitiveType(typeNode) {
         }
     }
     else if (primitiveType === 'string' && typeNode.parent) {
-        const enumMembers = decoratorUtils_js_1.getDecoratorArguments(typeNode.parent, t => t.text === 'Enum');
-        if (enumMembers) {
-            return { typeName: primitiveType, enumMembers: enumMembers };
+        const validDecorators = ['IsDate', 'IsDateTime'];
+        const jsdocTagName = jsDocUtils_1.getFirstMatchingJSDocTagName(typeNode.parent, tag => {
+            return validDecorators.some(t => t === tag.tagName.text);
+        });
+        const decoratorName = decoratorUtils_1.getDecoratorName(typeNode.parent, identifier => {
+            return validDecorators.some(m => m === identifier.text);
+        });
+        switch (decoratorName || jsdocTagName) {
+            case 'IsDate':
+                return { typeName: 'date' };
+            case 'IsDateTime':
+                return { typeName: 'datetime' };
+            default:
+                const enumMembers = decoratorUtils_1.getDecoratorArguments(typeNode.parent, t => t.text === 'Enum');
+                if (enumMembers) {
+                    return { typeName: primitiveType, enumMembers: enumMembers };
+                }
         }
     }
     return { typeName: primitiveType };
@@ -177,10 +191,14 @@ function getDateType(typeNode) {
     if (!parentNode) {
         return { typeName: 'datetime' };
     }
-    const decoratorName = decoratorUtils_js_1.getDecoratorName(parentNode, identifier => {
-        return ['IsDate', 'IsDateTime'].some(m => m === identifier.text);
+    const validDecorators = ['IsDate', 'IsDateTime'];
+    const decoratorName = decoratorUtils_1.getDecoratorName(parentNode, identifier => {
+        return validDecorators.some(m => m === identifier.text);
     });
-    switch (decoratorName) {
+    const jsdocTagName = jsDocUtils_1.getFirstMatchingJSDocTagName(parentNode, tag => {
+        return validDecorators.some(t => t === tag.tagName.text);
+    });
+    switch (decoratorName || jsdocTagName) {
         case 'IsDate':
             return { typeName: 'date' };
         case 'IsDateTime':
@@ -191,7 +209,7 @@ function getDateType(typeNode) {
 }
 function getEnumerateType(typeNode) {
     const enumName = typeNode.typeName.text;
-    const enumTypes = metadataGenerator_js_1.MetadataGenerator.current.nodes
+    const enumTypes = metadataGenerator_1.MetadataGenerator.current.nodes
         .filter(node => node.kind === typescript_1.default.SyntaxKind.EnumDeclaration)
         .filter(node => node.name.text === enumName);
     if (!enumTypes.length) {
@@ -274,7 +292,7 @@ function removeQuotes(str) {
 }
 function getLiteralType(typeNode, genericTypeMap) {
     const literalName = typeNode.typeName.text;
-    const literalTypes = metadataGenerator_js_1.MetadataGenerator.current.nodes
+    const literalTypes = metadataGenerator_1.MetadataGenerator.current.nodes
         .filter(node => node.kind === typescript_1.default.SyntaxKind.TypeAliasDeclaration)
         .filter(node => {
         const innerType = node.type;
@@ -464,7 +482,7 @@ function createCircularDependencyResolver(typeName) {
         properties: new Array(),
         typeName: typeName,
     };
-    metadataGenerator_js_1.MetadataGenerator.current.onFinish(referenceTypes => {
+    metadataGenerator_1.MetadataGenerator.current.onFinish(referenceTypes => {
         const realReferenceType = referenceTypes[typeName];
         if (!realReferenceType) {
             return;
@@ -530,7 +548,7 @@ function resolveModelTypeScope(leftmost, statements) {
 }
 function getModelTypeDeclaration(type) {
     const leftmostIdentifier = resolveLeftmostIdentifier(type);
-    const statements = resolveModelTypeScope(leftmostIdentifier, metadataGenerator_js_1.MetadataGenerator.current.nodes);
+    const statements = resolveModelTypeScope(leftmostIdentifier, metadataGenerator_1.MetadataGenerator.current.nodes);
     const typeName = type.kind === typescript_1.default.SyntaxKind.Identifier ? type.text :
         type.kind === typescript_1.default.SyntaxKind.PropertyAccessExpression ? type.name.text
             : type.right.text;
@@ -562,7 +580,7 @@ function getModelTypeProperties(node, genericTypes) {
             return member.kind === typescript_1.default.SyntaxKind.PropertySignature;
         })
             .filter((member) => {
-            const hidden = jsDocUtils_js_1.getFirstMatchingJSDocTagName(member, tag => {
+            const hidden = jsDocUtils_1.getFirstMatchingJSDocTagName(member, tag => {
                 return tag.tagName.text === 'Hidden';
             });
             return !hidden;
@@ -701,16 +719,16 @@ function getInheritanceAlias(modelTypeDeclaration, genericTypes) {
             if (prefixes.length > 0) {
                 typeName = `${prefixes.join('.')}.${typeName}`;
             }
-            let type = metadataGenerator_js_1.MetadataGenerator.current.getClassDeclaration(typeName);
+            let type = metadataGenerator_1.MetadataGenerator.current.getClassDeclaration(typeName);
             if (!type) {
-                type = metadataGenerator_js_1.MetadataGenerator.current.getInterfaceDeclaration(typeName);
+                type = metadataGenerator_1.MetadataGenerator.current.getInterfaceDeclaration(typeName);
             }
             const baseEntityName = t.expression;
             const parentGenerictypes = resolveTypeArguments(modelTypeDeclaration, genericTypes);
             const genericTypeMap = resolveTypeArguments(type, t.typeArguments, parentGenerictypes);
             const subClassGenericTypes = getSubClassGenericTypes(genericTypeMap, t.typeArguments);
             const referenceType = getReferenceType(baseEntityName, genericTypeMap, subClassGenericTypes);
-            metadataGenerator_js_1.MetadataGenerator.current.addReferenceType(referenceType);
+            metadataGenerator_1.MetadataGenerator.current.addReferenceType(referenceType);
             types.push(referenceType);
         });
     });
@@ -723,7 +741,7 @@ function getModelDescription(modelTypeDeclaration) {
     return getNodeDescription(modelTypeDeclaration);
 }
 function getNodeDescription(node) {
-    const symbol = metadataGenerator_js_1.MetadataGenerator.current.typeChecker.getSymbolAtLocation(node.name);
+    const symbol = metadataGenerator_1.MetadataGenerator.current.typeChecker.getSymbolAtLocation(node.name);
     if (symbol) {
         /**
          * TODO: Workaround for what seems like a bug in the compiler
@@ -733,7 +751,7 @@ function getNodeDescription(node) {
             // TypeScript won't parse jsdoc if the flag is 4, i.e. 'Property'
             symbol.flags = 0;
         }
-        const comments = symbol.getDocumentationComment(metadataGenerator_js_1.MetadataGenerator.current.typeChecker);
+        const comments = symbol.getDocumentationComment(metadataGenerator_1.MetadataGenerator.current.typeChecker);
         if (comments.length) {
             return typescript_1.default.displayPartsToString(comments);
         }
@@ -763,7 +781,7 @@ function getSuperClass(node, typeArguments) {
         if (filteredClauses.length > 0) {
             const clause = filteredClauses[0];
             if (clause.types && clause.types.length) {
-                const type = metadataGenerator_js_1.MetadataGenerator.current.getClassDeclaration(clause.types[0].expression.getText());
+                const type = metadataGenerator_1.MetadataGenerator.current.getClassDeclaration(clause.types[0].expression.getText());
                 return {
                     type: type,
                     typeArguments: resolveTypeArguments(type, clause.types[0].typeArguments, typeArguments)

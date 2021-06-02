@@ -1,6 +1,6 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getEnumValues = exports.Enum = exports.IsDouble = exports.IsFloat = exports.IsLong = exports.IsInt = exports.Hidden = exports.Produces = exports.Consumes = exports.Tags = exports.Example = exports.Response = void 0;
+exports.getEnumValues = exports.Enum = exports.IsDateTime = exports.IsDate = exports.IsDouble = exports.IsFloat = exports.IsLong = exports.IsInt = exports.Hidden = exports.Produces = exports.Consumes = exports.Tags = exports.Example = exports.Response = void 0;
 /**
  * A decorator to document the responses that a given service method can return. It is used to generate
  * documentation for the REST service.
@@ -117,6 +117,22 @@ function IsDouble(target, propertyKey, parameterIndex) {
     return;
 }
 exports.IsDouble = IsDouble;
+/**
+ * Document the type of a property or parameter as a `string ($date)` format in generated swagger docs
+ */
+function IsDate(target, propertyKey, parameterIndex) {
+    return;
+}
+exports.IsDate = IsDate;
+/**
+ * Document the type of a property or parameter as a `string ($date-time)` format in generated swagger docs.
+ *
+ * This is the default behavior for 'Date' types without specifying a decorator.
+ */
+function IsDateTime(target, propertyKey, parameterIndex) {
+    return;
+}
+exports.IsDateTime = IsDateTime;
 const EnumSymbol = Symbol.for("typescript-rest-swagger-enum");
 /**
  * Decorator to provide enum values for a string field dynamically

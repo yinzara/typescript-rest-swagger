@@ -9,8 +9,8 @@ const glob_1 = __importDefault(require("glob"));
 const lodash_1 = __importDefault(require("lodash"));
 const minimatch_1 = __importDefault(require("minimatch"));
 const typescript_1 = __importDefault(require("typescript"));
-const decoratorUtils_js_1 = require("../utils/decoratorUtils.js");
-const controllerGenerator_js_1 = require("./controllerGenerator.js");
+const decoratorUtils_1 = require("../utils/decoratorUtils");
+const controllerGenerator_1 = require("./controllerGenerator");
 class MetadataGenerator {
     constructor(entryFile, compilerOptions, ignorePaths) {
         this.ignorePaths = ignorePaths;
@@ -120,8 +120,8 @@ class MetadataGenerator {
     buildControllers() {
         return this.nodes
             .filter(node => node.kind === typescript_1.default.SyntaxKind.ClassDeclaration)
-            .filter(node => !decoratorUtils_js_1.isDecorator(node, decorator => 'Hidden' === decorator.text))
-            .map((classDeclaration) => new controllerGenerator_js_1.ControllerGenerator(classDeclaration))
+            .filter(node => !decoratorUtils_1.isDecorator(node, decorator => 'Hidden' === decorator.text))
+            .map((classDeclaration) => new controllerGenerator_1.ControllerGenerator(classDeclaration))
             .filter(generator => generator.isValid())
             .map(generator => generator.generate());
     }

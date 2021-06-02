@@ -1,6 +1,6 @@
 import debug from 'debug';
 import ts from 'typescript';
-import { ResponseType } from './metadataGenerator.js';
+import { ResponseType } from './metadataGenerator';
 export declare abstract class EndpointGenerator<T extends ts.Node> {
     protected node: T;
     protected debugger: debug.Debugger;

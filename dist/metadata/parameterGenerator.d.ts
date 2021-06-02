@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { Parameter } from './metadataGenerator.js';
+import { Parameter } from './metadataGenerator';
 export declare class ParameterGenerator {
     private readonly parameter;
     private readonly method;

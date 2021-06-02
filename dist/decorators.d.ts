@@ -85,6 +85,16 @@ export declare function IsFloat(target: any, propertyKey: string, parameterIndex
  */
 export declare function IsDouble(target: any, propertyKey: string, parameterIndex?: number): void;
 /**
+ * Document the type of a property or parameter as a `string ($date)` format in generated swagger docs
+ */
+export declare function IsDate(target: any, propertyKey: string, parameterIndex?: number): void;
+/**
+ * Document the type of a property or parameter as a `string ($date-time)` format in generated swagger docs.
+ *
+ * This is the default behavior for 'Date' types without specifying a decorator.
+ */
+export declare function IsDateTime(target: any, propertyKey: string, parameterIndex?: number): void;
+/**
  * Decorator to provide enum values for a string field dynamically
  * Can only be used as a decorator and not as a JSDoc comment
  *

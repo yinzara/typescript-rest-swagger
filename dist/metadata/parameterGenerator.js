@@ -5,9 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ParameterGenerator = void 0;
 const typescript_1 = __importDefault(require("typescript"));
-const decoratorUtils_js_1 = require("../utils/decoratorUtils.js");
-const metadataGenerator_js_1 = require("./metadataGenerator.js");
-const resolveType_js_1 = require("./resolveType.js");
+const decoratorUtils_1 = require("../utils/decoratorUtils");
+const metadataGenerator_1 = require("./metadataGenerator");
+const resolveType_1 = require("./resolveType");
 class ParameterGenerator {
     constructor(parameter, method, path, genericTypeMap) {
         this.parameter = parameter;
@@ -16,7 +16,7 @@ class ParameterGenerator {
         this.genericTypeMap = genericTypeMap;
     }
     generate() {
-        const decoratorName = decoratorUtils_js_1.getDecoratorName(this.parameter, identifier => this.supportParameterDecorator(identifier.text));
+        const decoratorName = decoratorUtils_1.getDecoratorName(this.parameter, identifier => this.supportParameterDecorator(identifier.text));
         switch (decoratorName) {
             case 'Param':
                 return this.getRequestParameter(this.parameter);
@@ -59,7 +59,7 @@ class ParameterGenerator {
         return {
             description: this.getParameterDescription(parameter),
             in: 'param',
-            name: decoratorUtils_js_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'Param') || parameterName,
+            name: decoratorUtils_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'Param') || parameterName,
             parameterName: parameterName,
             required: !parameter.questionToken,
             type: type
@@ -84,7 +84,7 @@ class ParameterGenerator {
         return {
             description: this.getParameterDescription(parameter),
             in: 'formData',
-            name: decoratorUtils_js_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'FileParam') || parameterName,
+            name: decoratorUtils_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'FileParam') || parameterName,
             parameterName: parameterName,
             required: !parameter.questionToken,
             type: { typeName: 'file' }
@@ -98,7 +98,7 @@ class ParameterGenerator {
         return {
             description: this.getParameterDescription(parameter),
             in: 'formData',
-            name: decoratorUtils_js_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'FilesParam') || parameterName,
+            name: decoratorUtils_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'FilesParam') || parameterName,
             parameterName: parameterName,
             required: !parameter.questionToken,
             type: { typeName: 'file' }
@@ -113,7 +113,7 @@ class ParameterGenerator {
         return {
             description: this.getParameterDescription(parameter),
             in: 'formData',
-            name: decoratorUtils_js_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'FormParam') || parameterName,
+            name: decoratorUtils_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'FormParam') || parameterName,
             parameterName: parameterName,
             required: !parameter.questionToken && !parameter.initializer,
             type: type
@@ -128,7 +128,7 @@ class ParameterGenerator {
         return {
             description: this.getParameterDescription(parameter),
             in: 'cookie',
-            name: decoratorUtils_js_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'CookieParam') || parameterName,
+            name: decoratorUtils_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'CookieParam') || parameterName,
             parameterName: parameterName,
             required: !parameter.questionToken && !parameter.initializer,
             type: { typeName: '' }
@@ -158,7 +158,7 @@ class ParameterGenerator {
         return {
             description: this.getParameterDescription(parameter),
             in: 'header',
-            name: decoratorUtils_js_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'HeaderParam') || parameterName,
+            name: decoratorUtils_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'HeaderParam') || parameterName,
             parameterName: parameterName,
             required: !parameter.questionToken && !parameter.initializer,
             type: type
@@ -166,10 +166,10 @@ class ParameterGenerator {
     }
     getQueryParameter(parameter) {
         const parameterName = parameter.name.text;
-        const parameterOptions = decoratorUtils_js_1.getDecoratorOptions(this.parameter, ident => ident.text === 'QueryParam') || {};
+        const parameterOptions = decoratorUtils_1.getDecoratorOptions(this.parameter, ident => ident.text === 'QueryParam') || {};
         let type = this.getValidatedType(parameter);
         if (!this.supportQueryDataType(type)) {
-            const arrayType = resolveType_js_1.getCommonPrimitiveAndArrayUnionType(parameter.type);
+            const arrayType = resolveType_1.getCommonPrimitiveAndArrayUnionType(parameter.type);
             if (arrayType && this.supportQueryDataType(arrayType)) {
                 type = arrayType;
             }
@@ -185,7 +185,7 @@ class ParameterGenerator {
             in: 'query',
             // maxItems: parameterOptions.maxItems,
             // minItems: parameterOptions.minItems,
-            name: decoratorUtils_js_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'QueryParam') || parameterName,
+            name: decoratorUtils_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'QueryParam') || parameterName,
             parameterName: parameterName,
             required: !parameter.questionToken && !parameter.initializer,
             type: type
@@ -194,7 +194,7 @@ class ParameterGenerator {
     getPathParameter(parameter) {
         const parameterName = parameter.name.text;
         const type = this.getValidatedType(parameter);
-        const pathName = decoratorUtils_js_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'PathParam') || parameterName;
+        const pathName = decoratorUtils_1.getDecoratorTextValue(this.parameter, ident => ident.text === 'PathParam') || parameterName;
         if (!this.supportPathDataType(type)) {
             throw new InvalidParameterException(`Parameter '${parameterName}:${type}' can't be passed as a path parameter in '${this.getCurrentLocation()}'.`);
         }
@@ -211,9 +211,9 @@ class ParameterGenerator {
         };
     }
     getParameterDescription(node) {
-        const symbol = metadataGenerator_js_1.MetadataGenerator.current.typeChecker.getSymbolAtLocation(node.name);
+        const symbol = metadataGenerator_1.MetadataGenerator.current.typeChecker.getSymbolAtLocation(node.name);
         if (symbol) {
-            const comments = symbol.getDocumentationComment(metadataGenerator_js_1.MetadataGenerator.current.typeChecker);
+            const comments = symbol.getDocumentationComment(metadataGenerator_1.MetadataGenerator.current.typeChecker);
             if (comments.length) {
                 return typescript_1.default.displayPartsToString(comments);
             }
@@ -241,13 +241,13 @@ class ParameterGenerator {
         if (!parameter.type) {
             throw new Error(`Parameter ${parameter.name} doesn't have a valid type assigned in '${this.getCurrentLocation()}'.`);
         }
-        return resolveType_js_1.resolveType(parameter.type, this.genericTypeMap);
+        return resolveType_1.resolveType(parameter.type, this.genericTypeMap);
     }
     getDefaultValue(initializer) {
         if (!initializer) {
             return;
         }
-        return resolveType_js_1.getLiteralValue(initializer);
+        return resolveType_1.getLiteralValue(initializer);
     }
 }
 exports.ParameterGenerator = ParameterGenerator;

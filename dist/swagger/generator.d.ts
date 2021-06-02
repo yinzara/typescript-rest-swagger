@@ -1,6 +1,6 @@
-import { SwaggerConfig } from '../config.js';
-import { Metadata } from '../metadata/metadataGenerator.js';
-import { Swagger } from './swagger.js';
+import { SwaggerConfig } from '../config';
+import { Metadata } from '../metadata/metadataGenerator';
+import { Swagger } from './swagger';
 export declare class SpecGenerator {
     private readonly metadata;
     private readonly config;

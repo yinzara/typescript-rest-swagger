@@ -7,15 +7,15 @@ exports.EndpointGenerator = void 0;
 const debug_1 = __importDefault(require("debug"));
 const lodash_1 = __importDefault(require("lodash"));
 const typescript_1 = __importDefault(require("typescript"));
-const decoratorUtils_js_1 = require("../utils/decoratorUtils.js");
-const resolveType_js_1 = require("./resolveType.js");
+const decoratorUtils_1 = require("../utils/decoratorUtils");
+const resolveType_1 = require("./resolveType");
 class EndpointGenerator {
     constructor(node, name) {
         this.node = node;
         this.debugger = debug_1.default(`typescript-rest-swagger:metadata:${name}`);
     }
     getDecoratorValues(decoratorName, acceptMultiple = false) {
-        const decorators = decoratorUtils_js_1.getDecorators(this.node, decorator => decorator.text === decoratorName);
+        const decorators = decoratorUtils_1.getDecorators(this.node, decorator => decorator.text === decoratorName);
         if (!decorators || !decorators.length) {
             return [];
         }
@@ -90,7 +90,7 @@ class EndpointGenerator {
         }
     }
     getResponses(genericTypeMap) {
-        const decorators = decoratorUtils_js_1.getDecorators(this.node, decorator => decorator.text === 'Response');
+        const decorators = decoratorUtils_1.getDecorators(this.node, decorator => decorator.text === 'Response');
         if (!decorators || !decorators.length) {
             return [];
         }
@@ -113,7 +113,7 @@ class EndpointGenerator {
                 description: description,
                 examples: examples,
                 schema: (decorator.typeArguments && decorator.typeArguments.length > 0)
-                    ? resolveType_js_1.resolveType(decorator.typeArguments[0], genericTypeMap)
+                    ? resolveType_1.resolveType(decorator.typeArguments[0], genericTypeMap)
                     : undefined,
                 status: status
             };

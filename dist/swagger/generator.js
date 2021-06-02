@@ -29,7 +29,7 @@ const lodash_1 = __importDefault(require("lodash"));
 const path_1 = __importDefault(require("path"));
 const js_yaml_1 = __importDefault(require("js-yaml"));
 const minimatch_1 = __importDefault(require("minimatch"));
-const config_js_1 = require("../config.js");
+const config_1 = require("../config");
 const merge_1 = __importDefault(require("merge"));
 class SpecGenerator {
     constructor(metadata, config) {
@@ -42,7 +42,7 @@ class SpecGenerator {
         this.debugger('Swagger Config: %j', this.config);
         this.debugger('Services Metadata: %j', this.metadata);
         let spec = this.getSwaggerSpec();
-        if (this.config.outputFormat === config_js_1.Specification.OpenApi_3) {
+        if (this.config.outputFormat === config_1.Specification.OpenApi_3) {
             spec = await this.convertToOpenApiSpec(spec);
         }
         return new Promise((resolve, reject) => {
