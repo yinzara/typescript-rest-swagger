@@ -1,11 +1,11 @@
 import _ from 'lodash';
 import ts from 'typescript';
-import { getDecoratorTextValue, isDecorator } from '../utils/decoratorUtils.js';
-import { normalizePath } from '../utils/pathUtils.js';
-import { EndpointGenerator } from './endpointGenerator.js';
-import { Controller } from './metadataGenerator.js';
-import { MethodGenerator } from './methodGenerator.js';
-import { getSuperClass } from './resolveType.js';
+import { getDecoratorTextValue, isDecorator } from '../utils/decoratorUtils';
+import { normalizePath } from '../utils/pathUtils';
+import { EndpointGenerator } from './endpointGenerator';
+import { Controller } from './metadataGenerator';
+import { MethodGenerator } from './methodGenerator';
+import { getSuperClass } from './resolveType';
 
 export class ControllerGenerator extends EndpointGenerator<ts.ClassDeclaration> {
     private readonly pathValue: string | undefined;

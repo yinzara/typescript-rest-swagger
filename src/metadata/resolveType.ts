@@ -3,9 +3,9 @@ import ts from 'typescript';
 import {
     getDecoratorName,
     getDecoratorArguments
-} from '../utils/decoratorUtils.js';
-import { getFirstMatchingJSDocTagName } from '../utils/jsDocUtils.js';
-import { ArrayType, EnumerateType, MetadataGenerator, ObjectType, Property, ReferenceType, Type } from './metadataGenerator.js';
+} from '../utils/decoratorUtils';
+import { getFirstMatchingJSDocTagName } from '../utils/jsDocUtils';
+import { ArrayType, EnumerateType, MetadataGenerator, ObjectType, Property, ReferenceType, Type } from './metadataGenerator';
 
 let syntaxKindMap: { [kind: number]: string };
 
@@ -170,10 +170,28 @@ function getPrimitiveType(typeNode: ts.TypeNode): Type | undefined {
                 return { typeName: 'double' };
         }
     } else if (primitiveType === 'string' && typeNode.parent) {
-        const enumMembers = getDecoratorArguments(typeNode.parent, t => t.text === 'Enum');
-        if (enumMembers) {
-            return { typeName: primitiveType, enumMembers: enumMembers } as Type;
+        const validDecorators = ['IsDate', 'IsDateTime'];
+
+        const jsdocTagName = getFirstMatchingJSDocTagName(typeNode.parent, tag => {
+            return validDecorators.some(t => t === tag.tagName.text);
+        });
+
+        const decoratorName = getDecoratorName(typeNode.parent, identifier => {
+            return validDecorators.some(m => m === identifier.text);
+        });
+
+        switch (decoratorName || jsdocTagName) {
+            case 'IsDate':
+                return { typeName: 'date' };
+            case 'IsDateTime':
+                return { typeName: 'datetime' };
+            default:
+                const enumMembers = getDecoratorArguments(typeNode.parent, t => t.text === 'Enum');
+                if (enumMembers) {
+                    return { typeName: primitiveType, enumMembers: enumMembers } as Type;
+                }
         }
+
     }
     return { typeName: primitiveType };
 }
@@ -183,16 +201,20 @@ function getDateType(typeNode: ts.TypeNode): Type {
     if (!parentNode) {
         return { typeName: 'datetime' };
     }
+    const validDecorators = ['IsDate', 'IsDateTime'];
     const decoratorName = getDecoratorName(parentNode, identifier => {
-        return ['IsDate', 'IsDateTime'].some(m => m === identifier.text);
+        return validDecorators.some(m => m === identifier.text);
     });
-    switch (decoratorName) {
-        case 'IsDate':
-            return { typeName: 'date' };
-        case 'IsDateTime':
-            return { typeName: 'datetime' };
-        default:
-            return { typeName: 'datetime' };
+    const jsdocTagName = getFirstMatchingJSDocTagName(parentNode, tag => {
+      return validDecorators.some(t => t === tag.tagName.text);
+    });
+    switch (decoratorName || jsdocTagName) {
+      case 'IsDate':
+        return { typeName: 'date' };
+      case 'IsDateTime':
+        return { typeName: 'datetime' };
+      default:
+        return { typeName: 'datetime' };
     }
 }
 

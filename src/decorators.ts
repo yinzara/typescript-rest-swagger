@@ -116,6 +116,22 @@ export function IsDouble(target: any, propertyKey: string, parameterIndex?: numb
   return;
 }
 
+/**
+ * Document the type of a property or parameter as a `string ($date)` format in generated swagger docs
+ */
+export function IsDate(target: any, propertyKey: string, parameterIndex?: number) {
+  return;
+}
+
+/**
+ * Document the type of a property or parameter as a `string ($date-time)` format in generated swagger docs.
+ *
+ * This is the default behavior for 'Date' types without specifying a decorator.
+ */
+export function IsDateTime(target: any, propertyKey: string, parameterIndex?: number) {
+    return;
+}
+
 const EnumSymbol = Symbol.for("typescript-rest-swagger-enum");
 
 /**

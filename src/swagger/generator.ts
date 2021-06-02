@@ -4,12 +4,12 @@ import _ from 'lodash';
 import pathUtil from 'path';
 import YAML from 'js-yaml';
 import mm from "minimatch";
-import { Specification, SwaggerConfig } from '../config.js';
+import { Specification, SwaggerConfig } from '../config';
 import {
     ArrayType, EnumerateType, Metadata, Method, ObjectType, Parameter,
     Property, ReferenceType, ResponseType, Type
-} from '../metadata/metadataGenerator.js';
-import { Swagger } from './swagger.js';
+} from '../metadata/metadataGenerator';
+import { Swagger } from './swagger';
 import merge from 'merge';
 
 type Definitions = { [definitionsName: string]: Swagger.Schema };

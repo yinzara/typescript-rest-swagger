@@ -331,6 +331,17 @@ export class PrimitiveClassModel {
 
     @swagger.IsDouble
     public double?: number;
+
+    @swagger.IsDate
+    public dateString?: string;
+
+    @swagger.IsDateTime
+    public dateTimeString?: string;
+
+    @swagger.IsDate
+    public date?: Date;
+
+    public dateTime?: Date;
 }
 
 export interface PrimitiveInterfaceModel {
@@ -354,6 +365,23 @@ export interface PrimitiveInterfaceModel {
      * @IsDouble
      */
     double?: number;
+
+    /**
+     * @IsDate
+     */
+    dateString?: string;
+
+    /**
+     * @IsDateTime
+     */
+    dateTimeString?: string;
+
+    /**
+     * @IsDate
+     */
+    date?: Date;
+
+    dateTime?: Date;
 }
 
 @Path('primitives')
@@ -374,6 +402,12 @@ export class PrimitiveEndpoint {
     @Path(':id')
     @GET
     public getById(@PathParam('id') @swagger.IsLong id: number) {
+        // ...
+    }
+
+    @Path('/search')
+    @GET
+    public searchByDate(@QueryParam('start') @swagger.IsDate start: string, @QueryParam('end') @swagger.IsDate end: Date) {
         // ...
     }
 

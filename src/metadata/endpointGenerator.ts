@@ -3,9 +3,9 @@
 import debug from 'debug';
 import _ from 'lodash';
 import ts from 'typescript';
-import { getDecorators } from '../utils/decoratorUtils.js';
-import { ResponseType } from './metadataGenerator.js';
-import { resolveType } from './resolveType.js';
+import { getDecorators } from '../utils/decoratorUtils';
+import { ResponseType } from './metadataGenerator';
+import { resolveType } from './resolveType';
 
 export abstract class EndpointGenerator<T extends ts.Node> {
     protected node: T;

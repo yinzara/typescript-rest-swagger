@@ -245,7 +245,7 @@ describe('Definition generation', () => {
       expression = jsonata('paths."/mypath/test-compiler-options".post.responses."200".schema');
       expect(expression.evaluate(spec)).toEqual({ $ref: '#/definitions/TestInterface' });
       expression = jsonata('paths."/mypath/test-compiler-options".post.parameters[0].schema');
-      expect(expression.evaluate(spec)).toEqual({ $ref: '#/definitions/TestInterface' });
+      expect(expression.evaluate(spec)).toEqual({ $ref: '#/definitions/TestInterface', description: '' });
     });
     it('should support formparam', () => {
       expect(spec.paths).toHaveProperty('/mypath/test-form-param');
@@ -344,11 +344,67 @@ describe('Definition generation', () => {
 
     it('should generate array type names as type + Array', () => {
       let expression = jsonata('definitions.ResponseBodystringArray');
-      expect(expression.evaluate(spec)).toBeUndefined();
+      expect(expression.evaluate(spec)).not.toBeUndefined();
       expression = jsonata('paths."/primitives/arrayNative".get.responses."200".schema."$ref"');
       expect(expression.evaluate(spec)).toEqual('#/definitions/ResponseBodystringArray');
       expression = jsonata('paths."/primitives/array".get.responses."200".schema."$ref"');
       expect(expression.evaluate(spec)).toEqual('#/definitions/ResponseBodystringArray');
+    });
+
+    it('should generate string type with date format with @IsDate tag declared on Class string property', () => {
+      let expression = jsonata('definitions.PrimitiveClassModel.properties.dateString.type');
+      expect(expression.evaluate(spec)).toEqual('string');
+      expression = jsonata('definitions.PrimitiveClassModel.properties.dateString.format');
+      expect(expression.evaluate(spec)).toEqual('date');
+    });
+
+    it('should generate string type with date format with @IsDate tag declared on Class Date property', () => {
+      let expression = jsonata('definitions.PrimitiveClassModel.properties.date.type');
+      expect(expression.evaluate(spec)).toEqual('string');
+      expression = jsonata('definitions.PrimitiveClassModel.properties.date.format');
+      expect(expression.evaluate(spec)).toEqual('date');
+    });
+
+    it('should generate string type with date-time format with @IsDateTime tag declared on Class string property', () => {
+      let expression = jsonata('definitions.PrimitiveClassModel.properties.dateTimeString.type');
+      expect(expression.evaluate(spec)).toEqual('string');
+      expression = jsonata('definitions.PrimitiveClassModel.properties.dateTimeString.format');
+      expect(expression.evaluate(spec)).toEqual('date-time');
+    });
+
+    it('should generate string type with date-time format with no tag declared on Class Date property', () => {
+      let expression = jsonata('definitions.PrimitiveClassModel.properties.dateTime.type');
+      expect(expression.evaluate(spec)).toEqual('string');
+      expression = jsonata('definitions.PrimitiveClassModel.properties.dateTime.format');
+      expect(expression.evaluate(spec)).toEqual('date-time');
+    });
+
+    it('should generate string type with date format with @IsDate tag declared on string interface property', () => {
+      let expression = jsonata('definitions.PrimitiveInterfaceModel.properties.dateString.type');
+      expect(expression.evaluate(spec)).toEqual('string');
+      expression = jsonata('definitions.PrimitiveInterfaceModel.properties.dateString.format');
+      expect(expression.evaluate(spec)).toEqual('date');
+    });
+
+    it('should generate string type with date-time format with @IsDateTime tag declared on string interface property', () => {
+      let expression = jsonata('definitions.PrimitiveInterfaceModel.properties.dateTimeString.type');
+      expect(expression.evaluate(spec)).toEqual('string');
+      expression = jsonata('definitions.PrimitiveInterfaceModel.properties.dateTimeString.format');
+      expect(expression.evaluate(spec)).toEqual('date-time');
+    });
+
+    it('should generate string type with date format with @IsDate tag declared on Date interface property', () => {
+      let expression = jsonata('definitions.PrimitiveInterfaceModel.properties.date.type');
+      expect(expression.evaluate(spec)).toEqual('string');
+      expression = jsonata('definitions.PrimitiveInterfaceModel.properties.date.format');
+      expect(expression.evaluate(spec)).toEqual('date');
+    });
+
+    it('should generate string type with date-time format with no tag declared on Date interface property', () => {
+      let expression = jsonata('definitions.PrimitiveInterfaceModel.properties.dateTime.type');
+      expect(expression.evaluate(spec)).toEqual('string');
+      expression = jsonata('definitions.PrimitiveInterfaceModel.properties.dateTime.format');
+      expect(expression.evaluate(spec)).toEqual('date-time');
     });
   });
 
